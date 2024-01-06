@@ -1,0 +1,68 @@
+#####
+# Configuration file for the Edge Device App (EDA)
+#
+# This provides a section-based configuration format for use by
+# ConfigUtil with keys defined in ConfigConst.
+#
+# IMPORTANT: Edit this file to meet your local system requirements.
+#
+
+#
+# MQTT client configuration information
+#
+[Mqtt.GatewayService]
+credFile       = ./cred/PdtMqttLocalCred.props
+certFile       = ./cert/PdtMqttLocalCertFile.pem
+host           = localhost
+port           = 1883
+securePort     = 8883
+defaultQoS     = 0
+keepAlive      = 60
+enableAuth     = False
+enableCrypt    = False
+
+#
+# InfluxDB client configuration information
+#
+[Influx.GatewayService]
+credFile       = ./cred/PdtInfluxCred.props
+host           = localhost
+port           = 8086
+securePort     = 8886
+enableAuth     = True
+enableCrypt    = False
+envDataBucket  = env-data
+sysDataBucket  = sys-data
+
+#
+# EDA specific configuration information
+#
+[EdgeDevice]
+deviceLocationID = edgedevice001
+enableSimulator  = False
+enableEmulator   = True
+enableSenseHAT   = False
+enableMqttClient = True
+enablePersistenceClient = False
+enableSystemPerformance = True
+enableSensing    = True
+enableLogging    = True
+pollCycleSecs    = 5
+updateDisplayOnActuation = True
+testCdaDataPath  = /tmp/cda-data
+testEmptyApp     = False
+runForever       = True
+
+# configurable limits for sensor simulation
+humiditySimFloor   =   35.0
+humiditySimCeiling =   45.0
+pressureSimFloor   =  990.0
+pressureSimCeiling = 1010.0
+tempSimFloor       =   15.0
+tempSimCeiling     =   25.0
+
+# configurable limits for actuator triggers
+handleTempChangeOnDevice = True
+triggerHvacTempFloor     = 18.0
+triggerHvacTempCeiling   = 20.0
+

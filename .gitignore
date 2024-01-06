@@ -1,0 +1,8 @@
+**/*.pyc
+**/cert
+**/cred
+**/venv
+.venv
+.DS_Store
+pdt-venv
+wsl-venv

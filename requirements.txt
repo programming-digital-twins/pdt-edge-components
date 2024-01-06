@@ -1,0 +1,18 @@
+# Imports related to PIOT: Chapter 02 and later
+apscheduler
+psutil
+
+# Imports related to PIOT: Chapter 03 and later
+numpy
+matplotlib
+sense-emu
+pisense
+
+# Imports related to PIOT: Chapters 06 and later
+paho-mqtt
+
+# Imports related to PDT storage
+influxdb-client[ciso]
+
+# Imports specific to PDT
+azure-iot-modelsrepository
