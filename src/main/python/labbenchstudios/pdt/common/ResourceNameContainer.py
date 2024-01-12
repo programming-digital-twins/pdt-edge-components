@@ -48,6 +48,7 @@ class ResourceNameContainer(object):
 		self.resourceTypeName	 = ConfigConst.NOT_SET
 		self.resourceSubTypeName = None
 		self.typeCategoryID      = ConfigConst.DEFAULT_TYPE_ID
+		self.persistenceName     = None
 		
 		self.isActuationResource = False
 		self.isMediaResource     = False
@@ -58,7 +59,7 @@ class ResourceNameContainer(object):
 		self.iotDataContext      = data
 		
 		if not resource:
-			resource = ResourceNameEnum.REGISTRATION_RESOURCE
+			resource = ResourceNameEnum.SYSTEM_REQUEST_RESOURCE
 			
 		self._initResource(resource = resource)
 		
@@ -86,7 +87,7 @@ class ResourceNameContainer(object):
 		Returns the device named used for this resource.
 		Defaults to {@see ConfigConst.NOT_SET}
 	
-		@return String The device name.
+		@return str The device name.
 		"""
 		return self.deviceName
 	
@@ -96,7 +97,7 @@ class ResourceNameContainer(object):
 		stored internally and swap out the device name portion with {@see #deviceName}
 		if it's been explicitly set to a valid device name.
 		
-		@return String The adjusted, fully qualified resource name.
+		@return str The adjusted, fully qualified resource name.
 		"""
 		return self.fullResourceName
 	
@@ -106,7 +107,7 @@ class ResourceNameContainer(object):
 		It will either be represented as two sub-topics, or as a single sub-topic
 		as a concatenation of the resource type and sub-type.
 	
-		@return String
+		@return str
 		"""
 		return self.fullTypeName
 	
@@ -116,7 +117,7 @@ class ResourceNameContainer(object):
 		{@see ResourceTypeEnum#getGenericResourceName} method, which is simply
 		the resource enum with {@see ConfigConst.LEVEL_WILDCARD} as the device name.
 	
-		@return String
+		@return str
 		"""
 		genDevResName = self.fullResourceName.replace(self.deviceName, ConfigConst.LEVEL_WILDCARD)
 		
@@ -135,16 +136,23 @@ class ResourceNameContainer(object):
 		Returns the origination topic set during construction, or null if there
 		is none.
 	
-		@return String
+		@return str
 		"""
 		return self.originationTopic
 	
+	def getPersistenceName(self):
+		"""
+		Returns the persistence name. This may be a bucket name for TSDB storage,
+		or a generic name to identify this resource to a particular data store.
+
+		@return str
+		"""
 	def getProductPrefix(self):
 		"""
 		Returns the resource product prefix, which is the string content that
 		precedes the device name.
 	
-		@return String
+		@return str
 		"""
 		return self.productPrefix
 	
@@ -153,7 +161,7 @@ class ResourceNameContainer(object):
 		Returns the resource type. This will always be the content following
 		the device name.
 	
-		@return String The resource type.
+		@return str The resource type.
 		"""
 		return self.resourceTypeName
 	
@@ -162,7 +170,7 @@ class ResourceNameContainer(object):
 		Returns the resource sub-type. This will always be the content following
 		the device name and the resource type.
 	
-		@return String The resource sub-type.
+		@return str The resource sub-type.
 		"""
 		return self.resourceSubTypeName
 	
@@ -274,6 +282,17 @@ class ResourceNameContainer(object):
 			
 			self._initResourceName()
 	
+	def setPersistenceName(self, name: str = None):
+		"""
+		Sets the persistence name for this resource container. If valie, it will
+		stored internally as a reference to the persistence bucket name or other
+		persistence 'tag' associated with the contents of this container.
+
+		@param name The persistence name to set.
+		"""
+		if name and len(name.strip()) > 0:
+			self.persistenceName = name.strip()
+
 	def setProductPrefix(self, name: str = None):
 		"""
 		Sets the product prefix for this resource container. If valid, it will

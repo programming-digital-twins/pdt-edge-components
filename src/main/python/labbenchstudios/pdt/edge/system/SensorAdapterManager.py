@@ -90,7 +90,7 @@ class SensorAdapterManager(IDataManager):
 			
 		self.deviceID = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		
 		#
 		# FUTURE: use with labmodule04 only IFF connected to RPi
@@ -119,8 +119,11 @@ class SensorAdapterManager(IDataManager):
 			pressureData = self.pressureAdapter.generateTelemetry()
 			tempData     = self.tempAdapter.generateTelemetry()
 			
+			humidityData.setDeviceID(self.deviceID)
 			humidityData.setLocationID(self.locationID)
+			pressureData.setDeviceID(self.deviceID)
 			pressureData.setLocationID(self.locationID)
+			tempData.setDeviceID(self.deviceID)
 			tempData.setLocationID(self.locationID)
 			
 			logging.debug('Generated humidity data: ' + str(humidityData.getValue()))

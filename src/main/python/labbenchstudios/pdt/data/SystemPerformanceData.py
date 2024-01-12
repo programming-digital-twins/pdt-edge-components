@@ -36,7 +36,7 @@ class SystemPerformanceData(IotDataContext):
 		super(SystemPerformanceData, self).__init__( \
 			name = ConfigConst.SYSTEM_PERF_MSG, \
 			typeID = ConfigConst.SYSTEM_PERF_TYPE, \
-			typeCategoryID = ConfigConst.SYSTEM_PERF_TYPE,
+			typeCategoryID = ConfigConst.SYSTEM_PERF_TYPE_CATEGORY,
 			d = d)
 		
 		self.cpuUtil = ConfigConst.DEFAULT_VAL

@@ -109,7 +109,7 @@ class MqttClientConnector(IPubSubClient):
 						self.config.getInteger( \
 							ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.SECURE_PORT_KEY, ConfigConst.DEFAULT_MQTT_SECURE_PORT)
 		
-					self.mqttClient.tls_set(self.pemFileName, tls_version = ssl.PROTOCOL_TLSv1_2)
+					self.mqttClient.tls_set(self.pemFileName, tls_version = ssl.PROTOCOL_TLS)
 
 			except Exception as e:
 				logging.warning("Failed to enable TLS encryption. Using unencrypted connection.")

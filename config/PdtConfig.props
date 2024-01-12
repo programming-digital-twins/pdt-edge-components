@@ -11,6 +11,7 @@
 # MQTT client configuration information
 #
 [Mqtt.GatewayService]
+# NOTE: Use the fully qualified path
 credFile       = ./cred/PdtMqttLocalCred.props
 certFile       = ./cert/PdtMqttLocalCertFile.pem
 host           = localhost
@@ -22,33 +23,38 @@ enableAuth     = False
 enableCrypt    = False
 
 #
-# InfluxDB client configuration information
+# Data client configuration information (InfluxDB)
 #
-[Influx.GatewayService]
+[Data.GatewayService]
+# NOTE: Use the fully qualified path
 credFile       = ./cred/PdtInfluxCred.props
 host           = localhost
 port           = 8086
 securePort     = 8886
 enableAuth     = True
 enableCrypt    = False
-envDataBucket  = env-data
-sysDataBucket  = sys-data
+cmdDataBucket     = pdt-cmd-data
+connDataBucket    = pdt-conn-data
+sensorDataBucket  = pdt-sensor-data
+sysDataBucket     = pdt-sys-data
 
 #
 # EDA specific configuration information
 #
 [EdgeDevice]
+deviceID = edgedevice001
 deviceLocationID = edgedevice001
-enableSimulator  = False
-enableEmulator   = True
+enableSimulator  = True
+enableEmulator   = False
 enableSenseHAT   = False
-enableMqttClient = True
-enablePersistenceClient = False
+enableMqttClient = False
+enableTsdbClient = False
 enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True
 pollCycleSecs    = 5
 updateDisplayOnActuation = True
+# NOTE: Use the fully qualified path
 testCdaDataPath  = /tmp/cda-data
 testEmptyApp     = False
 runForever       = True

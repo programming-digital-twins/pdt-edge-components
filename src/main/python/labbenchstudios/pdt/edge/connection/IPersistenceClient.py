@@ -24,17 +24,16 @@
 
 import datetime
 
-import labbenchstudios.pdt.common.ConfigConst as ConfigConst
-
 from labbenchstudios.pdt.common.ResourceNameContainer import ResourceNameContainer
+from labbenchstudios.pdt.common.IDataLoader import IDataLoader
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
 
-from main.python.labbenchstudios.pdt.data import ActuatorData
-from main.python.labbenchstudios.pdt.data import ConnectionStateData
-from main.python.labbenchstudios.pdt.data import SensorData
-from main.python.labbenchstudios.pdt.data import SystemPerformanceData
+from labbenchstudios.pdt.data.ActuatorData import ActuatorData
+from labbenchstudios.pdt.data.ConnectionStateData import ConnectionStateData
+from labbenchstudios.pdt.data.SensorData import SensorData
+from labbenchstudios.pdt.data.SystemPerformanceData import SystemPerformanceData
 
-class IPersistenceClient():
+class IPersistenceClient(IDataLoader):
 	"""
 	Interface definition for persistence clients.
 	
@@ -58,63 +57,7 @@ class IPersistenceClient():
 		"""
 		pass
 	
-	def getActuatorData(self, resource: ResourceNameContainer = None, typeID: int = 0, startDate: datetime = None, endDate: datetime = None) -> ActuatorData:
-		"""
-		Attempts to retrieve the named data instance from the persistence server.
-		Will return null if there's no data matching the given type with the
-		given parameters.
-		
-		@param resource The target resource name.
-		@param typeID The type ID of the data to retrieve.
-		@param startDate The start date (null if narrowing is not needed).
-		@param endDate The end date (null if narrowing is not needed).
-		@return ActuatorData[] The data instance(s) associated with the lookup parameters.
-		"""
-		pass
-
-	def getConnectionStateData(self, resource: ResourceNameContainer = None, typeID: int = 0, startDate: datetime = None, endDate: datetime = None) -> ConnectionStateData:
-		"""
-		Attempts to retrieve the named data instance from the persistence server.
-		Will return null if there's no data matching the given type with the
-		given parameters.
-		
-		@param resource The target resource name.
-		@param typeID The type ID of the data to retrieve.
-		@param startDate The start date (null if narrowing is not needed).
-		@param endDate The end date (null if narrowing is not needed).
-		@return ConnectionStateData[] The data instance(s) associated with the lookup parameters.
-		"""
-		pass
-
-	def getSensorData(self, resource: ResourceNameContainer = None, typeID: int = 0, startDate: datetime = None, endDate: datetime = None) -> SensorData:
-		"""
-		Attempts to retrieve the named data instance from the persistence server.
-		Will return null if there's no data matching the given type with the
-		given parameters.
-		
-		@param resource The target resource name.
-		@param typeID The type ID of the data to retrieve.
-		@param startDate The start date (null if narrowing is not needed).
-		@param endDate The end date (null if narrowing is not needed).
-		@return SensorData[] The data instance(s) associated with the lookup parameters.
-		"""
-		pass
-
-	def getSystemPerformanceData(self, resource: ResourceNameContainer = None, typeID: int = 0, startDate: datetime = None, endDate: datetime = None) -> SystemPerformanceData:
-		"""
-		Attempts to retrieve the named data instance from the persistence server.
-		Will return null if there's no data matching the given type with the
-		given parameters.
-		
-		@param resource The target resource name.
-		@param typeID The type ID of the data to retrieve.
-		@param startDate The start date (null if narrowing is not needed).
-		@param endDate The end date (null if narrowing is not needed).
-		@return SystemPerformanceData[] The data instance(s) associated with the lookup parameters.
-		"""
-		pass
-
-	def storeData(self, resource: ResourceNameContainer = None, qos: int = 0, data: ActuatorData = None) -> bool:
+	def storeActuatorData(self, resource: ResourceNameContainer = None, qos: int = 0, data: ActuatorData = None) -> bool:
 		"""
 		Attempts to write the source data instance to the persistence server.
 		
@@ -124,7 +67,7 @@ class IPersistenceClient():
 		@return boolean True on success; false otherwise.
 		"""
 
-	def storeData(self, resource: ResourceNameContainer = None, qos: int = 0, data: ConnectionStateData = None) -> bool:
+	def storeConnectionStateData(self, resource: ResourceNameContainer = None, qos: int = 0, data: ConnectionStateData = None) -> bool:
 		"""
 		Attempts to write the source data instance to the persistence server.
 		
@@ -134,7 +77,7 @@ class IPersistenceClient():
 		@return boolean True on success; false otherwise.
 		"""
 
-	def storeData(self, resource: ResourceNameContainer = None, qos: int = 0, data: SensorData = None) -> bool:
+	def storeSensorData(self, resource: ResourceNameContainer = None, qos: int = 0, data: SensorData = None) -> bool:
 		"""
 		Attempts to write the source data instance to the persistence server.
 		
@@ -144,7 +87,7 @@ class IPersistenceClient():
 		@return boolean True on success; false otherwise.
 		"""
 
-	def storeData(self, resource: ResourceNameContainer = None, qos: int = 0, data: SystemPerformanceData = None) -> bool:
+	def storeSystemPerformanceData(self, resource: ResourceNameContainer = None, qos: int = 0, data: SystemPerformanceData = None) -> bool:
 		"""
 		Attempts to write the source data instance to the persistence server.
 		

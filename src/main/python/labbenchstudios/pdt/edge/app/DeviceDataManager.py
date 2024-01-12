@@ -25,6 +25,7 @@
 import logging
 from time import sleep
 
+from labbenchstudios.pdt.edge.connection.InfluxClientConnector import InfluxClientConnector
 from labbenchstudios.pdt.edge.connection.MqttClientConnector import MqttClientConnector
 
 from labbenchstudios.pdt.edge.system.ActuatorAdapterManager import ActuatorAdapterManager
@@ -87,11 +88,13 @@ class DeviceDataManager(IDataMessageListener):
 		self.actuatorAdapterMgr = None
 				
 		if self.enableTsdbClient:
-			self.tsdbClient = None
+			self.tsdbClient = InfluxClientConnector()
+			logging.info("TSDB connector enabled")
 
 		if self.enableMqttClient:
 			self.mqttClient = MqttClientConnector()
 			self.mqttClient.setDataMessageListener(self)
+			logging.info("MQTT connector enabled")
 			
 		if self.enableSystemPerf:
 			self.sysPerfMgr = SystemPerformanceManager()
@@ -107,17 +110,25 @@ class DeviceDataManager(IDataMessageListener):
 			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self)
 			logging.info("Local actuation capabilities enabled")
 		
+		self.deviceID     = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.locationID   = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
 		self.handleTempChangeOnDevice = \
 			self.configUtil.getBoolean( \
-				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
 			
 		self.triggerHvacTempFloor     = \
 			self.configUtil.getFloat( \
-				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
 				
 		self.triggerHvacTempCeiling   = \
 			self.configUtil.getFloat( \
-				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
 	
 	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
 		"""
@@ -189,6 +200,10 @@ class DeviceDataManager(IDataMessageListener):
 			# store the data in the cache
 			self.actuatorResponseCache[data.getName()] = data
 
+			# store the data in the TSDB (if enabled)
+			if (self.tsdbClient):
+				self.tsdbClient.storeActuatorData(data = data)
+			
 			# convert ActuatorData to JSON and get the msg resource
 			actuatorMsg = DataUtil().actuatorDataToJson(data)
 			resourceName = ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE
@@ -234,6 +249,11 @@ class DeviceDataManager(IDataMessageListener):
 		if data:
 			logging.info("Incoming sensor data received (from sensor manager): " + str(data))
 			
+			# store the data in the TSDB (if enabled)
+			if (self.tsdbClient):
+				self.tsdbClient.storeSensorData(data = data)
+			
+			# handle any local data analysis (this may trigger an actuation event)
 			self._handleSensorDataAnalysis(data)
 			
 			jsonData = DataUtil().sensorDataToJson(data = data)
@@ -255,6 +275,10 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		if data:
 			logging.info("Incoming system performance message received (from sys perf manager): " + str(data))
+			
+			# store the data in the TSDB (if enabled)
+			if (self.tsdbClient):
+				self.tsdbClient.storeSystemPerformanceData(data = data)
 			
 			jsonData = DataUtil().systemPerformanceDataToJson(data = data)
 			self._handleUpstreamTransmission(resource = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, msg = jsonData)
@@ -281,6 +305,9 @@ class DeviceDataManager(IDataMessageListener):
 		
 		if self.sensorAdapterMgr:
 			self.sensorAdapterMgr.startManager()
+
+		if self.tsdbClient:
+			self.tsdbClient.connectClient()
 			
 		logging.info("Started DeviceDataManager.")
 		
@@ -302,6 +329,9 @@ class DeviceDataManager(IDataMessageListener):
 			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
 			self.mqttClient.disconnectClient()
 				
+		if self.tsdbClient:
+			self.tsdbClient.disconnectClient()
+			
 		logging.info("Stopped DeviceDataManager.")
 		
 	def _handleIncomingDataAnalysis(self, resource = None, msg: str = None):
@@ -349,6 +379,7 @@ class DeviceDataManager(IDataMessageListener):
 		
 		@param data
 		"""
+		
 		if self.handleTempChangeOnDevice and data.getTypeID() == ConfigConst.TEMP_SENSOR_TYPE:
 			logging.info("Handle temp change: %s - type ID: %s", \
 				str(self.handleTempChangeOnDevice), str(data.getTypeID()))
@@ -358,6 +389,9 @@ class DeviceDataManager(IDataMessageListener):
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY, \
 				typeID = ConfigConst.HVAC_ACTUATOR_TYPE)
 			
+			ad.setDeviceID(self.deviceID)
+			ad.setLocationID(self.locationID)
+
 			if data.getValue() > self.triggerHvacTempCeiling:
 				ad.setCommand(ConfigConst.COMMAND_ON)
 				ad.setValue(self.triggerHvacTempCeiling)
@@ -380,9 +414,13 @@ class DeviceDataManager(IDataMessageListener):
 				typeCategoryID = ConfigConst.SYSTEM_MGMT_TYPE, \
 				typeID = ConfigConst.LED_DISPLAY_ACTUATOR_TYPE)
 
+			ad.setDeviceID(self.deviceID)
+			ad.setLocationID(self.locationID)
+			
 			ad.setValue(data.getValue())
 			ad.setCommand(ConfigConst.COMMAND_MSG_ONLY)
 			ad.setStateData(data.getName() + ': ' + str(data.getValue()))
+			
 			self.handleActuatorCommandMessage(ad)
 	
 	def _handleUpstreamTransmission(self, resource = None, msg: str = None):

@@ -72,7 +72,7 @@ class ActuatorAdapterManager(IDataManager):
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_EMULATOR_KEY)
 		self.deviceID     = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		self.locationID   = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
@@ -131,15 +131,15 @@ class ActuatorAdapterManager(IDataManager):
 			# via the location ID property
 			if data.getLocationID() == self.locationID:
 				logging.info("Actuator command received for location ID %s. Processing...", str(data.getLocationID()))
+
 				aType = data.getTypeID()
+				responseData = None
 
 				if self.isEnvSensingActive:
 					# and yes, there is a more elegant way to do this using a dict[]
 					# with int index and function pointers for each of these sections -
 					# this 	is merely to keep things clear considering we have a limited
 					# number of actuator emulator types
-					responseData = None
-
 					# TODO: implement appropriate logging and error handling
 					if aType == \
 						ConfigConst.HUMIDIFIER_ACTUATOR_TYPE and self.humidifierActuator:
@@ -160,16 +160,19 @@ class ActuatorAdapterManager(IDataManager):
 					elif aType == \
 						ConfigConst.LED_DISPLAY_ACTUATOR_TYPE and self.ledDisplayActuator:
 						responseData = self.ledDisplayActuator.updateActuator(data)
+
 					else:
 						logging.warning("No valid actuator type. Ignoring actuation for type: -%s- : -%s-", data.getTypeID(), aType)
 
-					return responseData
 				elif aType == \
 					ConfigConst.LED_DISPLAY_ACTUATOR_TYPE and self.ledDisplayActuator:
-					return self.ledDisplayActuator.updateActuator(data)
-				else:
-					# ignore - there's no active actuator enabled within this instance
-					pass
+					responseData = self.ledDisplayActuator.updateActuator(data)
+				
+				if responseData:
+					responseData.setDeviceID(self.deviceID)
+
+					return responseData
+				
 			else:
 				logging.warning( \
 					"Location ID doesn't match local. Ignoring: %s != %s", \

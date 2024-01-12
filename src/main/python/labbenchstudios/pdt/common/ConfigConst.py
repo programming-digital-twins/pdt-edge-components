@@ -33,12 +33,15 @@ configuration values or when default values may be needed.
 #
 
 NOT_SET = 'Not Set'
+RESOURCE_SEPARATOR_CHAR = '/'
+SUB_TYPE_SEPARATOR_CHAR = '-'
 
 DEFAULT_HOST             = 'localhost'
 DEFAULT_COAP_PORT        = 5683
 DEFAULT_COAP_SECURE_PORT = 5684
 DEFAULT_MQTT_PORT        = 1883
 DEFAULT_MQTT_SECURE_PORT = 8883
+DEFAULT_TSDB_PORT        = 8086
 DEFAULT_RTSP_STREAM_PORT = 8554
 DEFAULT_KEEP_ALIVE       = 60
 DEFAULT_POLL_CYCLES      = 60
@@ -130,9 +133,16 @@ IS_CONNECTING_PROP         = 'isConnecting'
 IS_CONNECTED_PROP          = 'isConnected'
 IS_DISCONNECTED_PROP       = 'isDisconnected'
 
+CMD_DATA_PERSISTENCE_NAME    = 'pdt-cmd-data'
+CONN_DATA_PERSISTENCE_NAME   = 'pdt-conn-data'
+SENSOR_DATA_PERSISTENCE_NAME = 'pdt-sensor-data'
+SYS_DATA_PERSISTENCE_NAME    = 'pdt-sys-data'
+
 #####
 # Resource and Topic Names
 #
+
+MSG = 'Msg'
 
 ACTUATOR_CMD      = 'ActuatorCmd'
 ACTUATOR_RESPONSE = 'ActuatorResponse'
@@ -152,6 +162,7 @@ HVAC_ACTUATOR_NAME       = 'HvacActuator'
 HUMIDITY_SENSOR_NAME = 'HumiditySensor'
 PRESSURE_SENSOR_NAME = 'PressureSensor'
 TEMP_SENSOR_NAME     = 'TempSensor'
+SYSTEM_MGMT_NAME     = 'SystemMgmt'
 SYSTEM_PERF_NAME     = 'SystemPerfMsg'
 CAMERA_SENSOR_NAME   = 'CameraSensor'
 
@@ -209,6 +220,8 @@ MEM_UTIL_NAME  = 'DeviceMemUtil'
 # e.g., PIOT/ConstrainedDevice/ActuatorCmd
 # e.g., PIOT/ConstrainedDevice/SensorMsg
 
+SYSTEM_REQUEST_RESOURCE = PRODUCT_NAME + '/' + SYSTEM_MGMT_NAME
+
 CDA_UPDATE_NOTIFICATIONS_MSG_RESOURCE = PRODUCT_NAME + '/' + CONSTRAINED_DEVICE + '/' + UPDATE_NOTIFICATIONS_MSG
 CDA_ACTUATOR_CMD_MSG_RESOURCE         = PRODUCT_NAME + '/' + CONSTRAINED_DEVICE + '/' + ACTUATOR_CMD
 CDA_ACTUATOR_RESPONSE_MSG_RESOURCE    = PRODUCT_NAME + '/' + CONSTRAINED_DEVICE + '/' + ACTUATOR_RESPONSE
@@ -233,6 +246,7 @@ TEST_GDA_DATA_PATH_KEY = 'testGdaDataPath'
 TEST_CDA_DATA_PATH_KEY = 'testCdaDataPath'
 
 LOCAL   = 'Local'
+DATA    = 'Data'
 MQTT    = 'Mqtt'
 COAP    = 'Coap'
 OPCUA   = 'Opcua'
@@ -243,6 +257,7 @@ DEVICE_LOCATION_ID_KEY = 'deviceLocationID'
 
 CLOUD_GATEWAY_SERVICE = CLOUD   + '.' + GATEWAY_SERVICE
 COAP_GATEWAY_SERVICE  = COAP    + '.' + GATEWAY_SERVICE
+DATA_GATEWAY_SERVICE  = DATA    + '.' + GATEWAY_SERVICE
 MQTT_GATEWAY_SERVICE  = MQTT    + '.' + GATEWAY_SERVICE
 OPCUA_GATEWAY_SERVICE = OPCUA   + '.' + GATEWAY_SERVICE
 SMTP_GATEWAY_SERVICE  = SMTP    + '.' + GATEWAY_SERVICE
@@ -271,6 +286,7 @@ TRUST_STORE_AUTH_KEY  = 'trustStoreAuth';
 USER_NAME_TOKEN_KEY   = 'userToken'
 USER_AUTH_TOKEN_KEY   = 'authToken'
 API_TOKEN_KEY         = 'apiToken'
+ORG_TOKEN_KEY         = 'orgToken'
 
 CERT_FILE_KEY        = 'certFile'
 CRED_FILE_KEY        = 'credFile'

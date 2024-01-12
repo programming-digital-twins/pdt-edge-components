@@ -30,16 +30,17 @@ class ConnectionStateData(IotDataContext):
 	"""
 	
 	"""
-		
+	
 	def __init__(self, \
-		typeCategoryID: int = ConfigConst.DEFAULT_SENSOR_TYPE, \
-		typeID: int = ConfigConst.DEFAULT_SENSOR_TYPE, \
+		typeCategoryID: int = ConfigConst.SYSTEM_MGMT_TYPE, \
+		typeID: int = ConfigConst.SYSTEM_MGMT_TYPE_CATEGORY, \
 		name = ConfigConst.NOT_SET, \
 		d = None):
 		super(ConnectionStateData, self).__init__(\
 			name = name, typeID = typeID, typeCategoryID = typeCategoryID, d = d)
 		
 		self.hostName = ConfigConst.DEFAULT_HOST
+		self.hostPort = ConfigConst.DEFAULT_MQTT_PORT
 		self.msgInCount = 0
 		self.msgOutCount = 0
 		self.isDisconnected = True
@@ -48,6 +49,9 @@ class ConnectionStateData(IotDataContext):
 	
 	def getHostName(self) -> str:
 		return self.hostName
+	
+	def getHostPort(self) -> int:
+		return self.hostPort
 	
 	def getMessageInCount(self) -> int:
 		return self.msgInCount
@@ -66,6 +70,10 @@ class ConnectionStateData(IotDataContext):
 	
 	def setHostName(self, hostName: str):
 		self.hostName = hostName
+		self.updateTimeStamp()
+
+	def setHostPort(self, port: int):
+		self.hostPort = port
 		self.updateTimeStamp()
 
 	def setMessageInCount(self, val: int):
@@ -103,6 +111,7 @@ class ConnectionStateData(IotDataContext):
 	def _handleUpdateData(self, data):
 		if data and isinstance(data, ConnectionStateData):
 			self.hostName = data.getHostName()
+			self.hostPort = data.getHostPort()
 			self.msgInCount = data.getMessageInCount()
 			self.msgOutCount = data.getMessageOutCount()
 			self.isConnecting = data.isClientConnecting()
@@ -114,10 +123,11 @@ class ConnectionStateData(IotDataContext):
 		String override function.
 		
 		"""
-		s = IotDataContext.__str__(self) + ',{}={},{}={},{}={},{}={},{}={},{}={}'
+		s = IotDataContext.__str__(self) + ',{}={},{}={},{}={},{}={},{}={},{}={},{}={}'
 		
 		return s.format(
 			ConfigConst.HOST_NAME_PROP, self.hostName,
+			ConfigConst.PORT_KEY, self.hostPort,
 			ConfigConst.MESSAGE_IN_COUNT_PROP, self.msgInCount,
 			ConfigConst.MESSAGE_OUT_COUNT_PROP, self.msgOutCount,
 			ConfigConst.IS_CONNECTING_PROP, self.isConnecting,
