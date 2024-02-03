@@ -131,7 +131,7 @@ class BaseSensorTask(ISensorTask):
 		
 		@return int
 		"""
-		return self.getTypeCategoryID
+		return self.typeCategoryID
 	
 	def getTelemetryValue(self) -> float:
 		"""

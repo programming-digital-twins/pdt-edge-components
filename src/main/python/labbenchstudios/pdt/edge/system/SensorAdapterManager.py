@@ -121,8 +121,10 @@ class SensorAdapterManager(IDataManager):
 			
 			humidityData.setDeviceID(self.deviceID)
 			humidityData.setLocationID(self.locationID)
+
 			pressureData.setDeviceID(self.deviceID)
 			pressureData.setLocationID(self.locationID)
+			
 			tempData.setDeviceID(self.deviceID)
 			tempData.setLocationID(self.locationID)
 			

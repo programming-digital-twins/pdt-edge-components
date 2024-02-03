@@ -365,13 +365,13 @@ class InfluxClientConnector(IPersistenceClient):
 				.tag(ConfigConst.LOCATION_ID_PROP, data.getLocationID()) \
 				.tag(ConfigConst.TYPE_ID_PROP, data.getTypeID()) \
 				.tag(ConfigConst.TYPE_CATEGORY_ID_PROP, data.getTypeCategoryID()) \
-				.field(ConfigConst.HOST_NAME_PROP, data.getHostName()) \
-				.field(ConfigConst.PORT_KEY, data.getHostPort()) \
-				.field(ConfigConst.MESSAGE_IN_COUNT_PROP, data.getMessageInCount()) \
-				.field(ConfigConst.MESSAGE_OUT_COUNT_PROP, data.getMessageOutCount()) \
-				.field(ConfigConst.IS_CONNECTING_PROP, data.isClientConnecting()) \
-				.field(ConfigConst.IS_CONNECTED_PROP, data.isClientConnected()) \
-				.field(ConfigConst.IS_DISCONNECTED_PROP, data.isClientDisconnected()) \
+				.tag(ConfigConst.HOST_NAME_PROP, data.getHostName()) \
+				.tag(ConfigConst.PORT_KEY, data.getHostPort()) \
+				.tag(ConfigConst.MESSAGE_IN_COUNT_PROP, data.getMessageInCount()) \
+				.tag(ConfigConst.MESSAGE_OUT_COUNT_PROP, data.getMessageOutCount()) \
+				.tag(ConfigConst.IS_CONNECTING_PROP, data.isClientConnecting()) \
+				.tag(ConfigConst.IS_CONNECTED_PROP, data.isClientConnected()) \
+				.tag(ConfigConst.IS_DISCONNECTED_PROP, data.isClientDisconnected()) \
 				.time(timeStampMillis, write_precision = "ms")
 
 		return dataPoint

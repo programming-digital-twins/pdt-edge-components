@@ -96,7 +96,7 @@ class BaseActuatorTask(IActuatorTask):
 		
 		@return int
 		"""
-		return self.getTypeCategoryID
+		return self.typeCategoryID
 	
 	def updateActuator(self, data: ActuatorData) -> ActuatorData:
 		"""
