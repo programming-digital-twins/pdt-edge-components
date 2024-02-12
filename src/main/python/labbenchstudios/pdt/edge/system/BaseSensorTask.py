@@ -73,7 +73,7 @@ class BaseSensorTask(ISensorTask):
 		
 		@return The SensorData instance.
 		"""
-		sensorData = SensorData(typeID = self.typeID, name = self.name)
+		sensorData = SensorData(typeID = self.typeID, typeCategoryID = self.typeCategoryID, name = self.name)
 		sensorVal = ConfigConst.DEFAULT_VAL
 		
 		if self.useRandomizer:

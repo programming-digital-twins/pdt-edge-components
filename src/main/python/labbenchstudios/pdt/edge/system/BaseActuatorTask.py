@@ -40,9 +40,6 @@ class BaseActuatorTask(IActuatorTask):
 		
 		@param actuatorType The int representing the type of the actuator.
 		"""
-		self.latestActuatorResponse = ActuatorData(typeID = typeID, name = name)
-		self.latestActuatorResponse.setAsResponse()
-		
 		self.name = name
 		self.typeID = typeID
 		self.typeCategoryID = typeCategoryID
@@ -50,6 +47,9 @@ class BaseActuatorTask(IActuatorTask):
 		self.lastKnownCommand = ConfigConst.DEFAULT_COMMAND
 		self.lastKnownValue = ConfigConst.DEFAULT_VAL
 		self.ignoreTypeID = False
+		
+		self.latestActuatorResponse = ActuatorData(typeID = self.typeID, typeCategoryID = self.typeCategoryID, name = self.name)
+		self.latestActuatorResponse.setAsResponse()
 		
 	def getLatestResponse(self) -> ActuatorData:
 		"""
