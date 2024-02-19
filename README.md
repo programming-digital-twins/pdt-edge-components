@@ -28,7 +28,8 @@ This repository is comprised of the following top level paths:
 Here are some other files at the top level that are important to review:
 - [requirements.txt](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/requirements.txt): The core library dependencies - use pip to install.
 - [README.md](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/README.md): This README.
-- [LICENSE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE): The repository's LICENSE file.
+- [LICENSE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE): The repository's non-code artifact LICENSE file (e.g., documentation, sample data files, etc.)
+- [LICENSE-CODE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-CODE): The repository's code artifact LICENSE file (e.g., source code [mostly Python])
 
 Lastly, here are some 'dot' ('.{filename}') files pertaining to dev environment setup that you may find useful (or not - if so, just delete them after cloning the repo):
 - [.gitignore](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/.gitignore): The obligatory .gitignore that you should probably keep in place, with any additions that are relevant for your own cloned instance.
@@ -79,4 +80,5 @@ This code base is under active development.
 If any code samples or other technology this work contains, describes, and / or is subject to open source licenses or the intellectual property rights of others, it is your responsibility to ensure that your use thereof complies with such licenses and/or rights.
 
 # LICENSE
-Please see [LICENSE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE) if you plan to use this code.
+Please see [LICENSE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE) if you plan to use the non-code resources (sample data files, etc.)
+Please see [LICENSE-CODE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-CODE) if you plan to use this code (e.g., Python code, etc.)
