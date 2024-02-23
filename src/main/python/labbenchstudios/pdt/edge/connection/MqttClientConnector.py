@@ -154,12 +154,15 @@ class MqttClientConnector(IPubSubClient):
 	def onConnect(self, client, userdata, flags, rc):
 		logging.info('[Callback] Connected to MQTT broker. Result code: ' + str(rc))
 		
+		actuatorCmdGenTopic = ConfigConst.PRODUCT_NAME + '/+/' + ConfigConst.ACTUATOR_CMD
+		#actuatorCmdGenTopic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value
+
 		# NOTE: Be sure to set `self.defaultQos` during instantiation!
 		self.mqttClient.subscribe( \
-			topic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, qos = self.defaultQos)
+			topic = actuatorCmdGenTopic, qos = self.defaultQos)
 		
 		self.mqttClient.message_callback_add( \
-			sub = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, \
+			sub = actuatorCmdGenTopic, \
 			callback = self.onActuatorCommandMessage)
 		
 	def onDisconnect(self, client, userdata, rc):

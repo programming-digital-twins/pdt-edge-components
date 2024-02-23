@@ -82,7 +82,10 @@ CONSTRAINED  = EDGE
 DEVICE       = 'Device'
 SERVICE      = 'Service'
 
+# CONSTRAINED_DEVICE and EDGE_DEVICE will be the same
+# They're both used for backwards compatability
 CONSTRAINED_DEVICE = CONSTRAINED + DEVICE
+EDGE_DEVICE        = EDGE + DEVICE
 GATEWAY_SERVICE    = GATEWAY + SERVICE
 CLOUD_SERVICE      = CLOUD + SERVICE
 

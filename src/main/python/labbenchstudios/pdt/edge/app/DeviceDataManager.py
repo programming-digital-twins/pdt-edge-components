@@ -179,7 +179,12 @@ class DeviceDataManager(IDataMessageListener):
 		logging.info("Actuator data: " + str(data))
 		
 		if data:
-			logging.info("Processing actuator command message.")
+			logging.info( \
+				"\n\nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" \
+				"\n\nProcessing actuator command message." \
+				"\n\tState: " + str(data.getStateData()) + \
+				"\n\tValue: " + str(data.getValue()) + \
+				"\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n")
 			
 			return self.actuatorAdapterMgr.sendActuatorCommand(data)
 		else:
