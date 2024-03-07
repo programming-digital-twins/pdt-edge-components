@@ -158,16 +158,16 @@ SYSTEM_PERF_MSG   = 'SystemPerfMsg'
 UPDATE_NOTIFICATIONS_MSG      = 'UpdateMsg'
 RESOURCE_REGISTRATION_REQUEST = 'ResourceRegRequest'
 
-LED_ACTUATOR_NAME        = 'LedActuator'
-HUMIDIFIER_ACTUATOR_NAME = 'HumidifierActuator'
-HVAC_ACTUATOR_NAME       = 'HvacActuator'
+LED_ACTUATOR_NAME        = 'Lighting'
+HUMIDIFIER_ACTUATOR_NAME = 'Humidifier'
+HVAC_ACTUATOR_NAME       = 'Thermostat'
 
-HUMIDITY_SENSOR_NAME = 'HumiditySensor'
-PRESSURE_SENSOR_NAME = 'PressureSensor'
-TEMP_SENSOR_NAME     = 'TempSensor'
-SYSTEM_MGMT_NAME     = 'SystemMgmt'
-SYSTEM_PERF_NAME     = 'SystemPerfMsg'
-CAMERA_SENSOR_NAME   = 'CameraSensor'
+HUMIDITY_SENSOR_NAME = 'Humidifier'
+PRESSURE_SENSOR_NAME = 'Barometer'
+TEMP_SENSOR_NAME     = 'Thermostat'
+SYSTEM_MGMT_NAME     = 'EdgeComputingDevice'
+SYSTEM_PERF_NAME     = 'EdgeComputingDevice'
+CAMERA_SENSOR_NAME   = 'Camera'
 
 COMMAND_ON  = 1
 COMMAND_OFF = 2
