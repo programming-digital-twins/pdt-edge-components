@@ -87,6 +87,10 @@ class MqttClientConnector(IPubSubClient):
 		
 		self.mqttClient = None
 		
+		self.deviceID = \
+			self.config.getProperty( \
+				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.DEVICE_ID_KEY, 'EdgeDeviceApp')
+		
 		self.clientID = \
 			self.config.getProperty( \
 				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.DEVICE_LOCATION_ID_KEY, 'EdgeDeviceApp')
@@ -154,16 +158,18 @@ class MqttClientConnector(IPubSubClient):
 	def onConnect(self, client, userdata, flags, rc):
 		logging.info('[Callback] Connected to MQTT broker. Result code: ' + str(rc))
 		
-		actuatorCmdGenTopic = ConfigConst.PRODUCT_NAME + '/+/' + ConfigConst.ACTUATOR_CMD
-		#actuatorCmdGenTopic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value
+		actuatorCmdTopic = \
+			ConfigConst.PRODUCT_NAME + '/' + self.deviceID + '/' + ConfigConst.ACTUATOR_CMD
 
 		# NOTE: Be sure to set `self.defaultQos` during instantiation!
 		self.mqttClient.subscribe( \
-			topic = actuatorCmdGenTopic, qos = self.defaultQos)
+			topic = actuatorCmdTopic, qos = self.defaultQos)
 		
 		self.mqttClient.message_callback_add( \
-			sub = actuatorCmdGenTopic, \
+			sub = actuatorCmdTopic, \
 			callback = self.onActuatorCommandMessage)
+		
+		logging.info('Subscribed to incoming command topic: ' + actuatorCmdTopic)
 		
 	def onDisconnect(self, client, userdata, rc):
 		"""
