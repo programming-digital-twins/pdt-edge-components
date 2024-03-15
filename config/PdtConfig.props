@@ -12,8 +12,9 @@
 #
 [Mqtt.GatewayService]
 # NOTE: Use the fully qualified path
-credFile       = ./cred/PdtMqttLocalCred.props
-certFile       = ./cert/PdtMqttLocalCertFile.pem
+credFile       = /mnt/d/pdt/pdt-edge-components/cred/PdtMqttLocalCred.props
+certFile       = /mnt/d/pdt/pdt-edge-components/cert/PdtMqttLocalCertFile.pem
+#host           = 192.168.4.105
 host           = localhost
 port           = 1883
 securePort     = 8883
@@ -27,8 +28,8 @@ enableCrypt    = False
 #
 [Data.GatewayService]
 # NOTE: Use the fully qualified path
-credFile       = ./cred/PdtInfluxCred.props
-host           = localhost
+credFile       = /mnt/d/pdt/pdt-edge-components/cred/PdtInfluxCred.props
+host           = 192.168.4.105
 port           = 8086
 securePort     = 8886
 enableAuth     = True
@@ -47,7 +48,7 @@ deviceLocationID = edgedevice001
 enableSimulator  = True
 enableEmulator   = False
 enableSenseHAT   = False
-enableMqttClient = False
+enableMqttClient = True
 enableTsdbClient = False
 enableSystemPerformance = True
 enableSensing    = True

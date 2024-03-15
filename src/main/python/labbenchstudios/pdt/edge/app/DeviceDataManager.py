@@ -186,7 +186,15 @@ class DeviceDataManager(IDataMessageListener):
 				"\n\tValue: " + str(data.getValue()) + \
 				"\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n")
 			
-			return self.actuatorAdapterMgr.sendActuatorCommand(data)
+			# we need to do two things:
+			# - notify our simulation engine (if it's running),
+			#   as this command may reset the simulation dataset
+			# - notify our actuator manager so it can handle
+			#   the actuation event
+			if self.sensorAdapterMgr:
+				self.sensorAdapterMgr.updateSimulationData(data = data)
+
+			return self.actuatorAdapterMgr.sendActuatorCommand(data = data)
 		else:
 			logging.warning("Incoming actuator command is invalid (null). Ignoring.")
 			

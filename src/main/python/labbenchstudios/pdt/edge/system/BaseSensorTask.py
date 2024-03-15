@@ -53,6 +53,7 @@ class BaseSensorTask(ISensorTask):
 		self.typeCategoryID = typeCategoryID
 		self.dataSetIndex = 0
 		self.useRandomizer = False
+		self.enableDataRoll = True
 		
 		self.latestSensorData = None
 		
@@ -61,6 +62,11 @@ class BaseSensorTask(ISensorTask):
 			self.minVal = minVal
 			self.maxVal = maxVal
 	
+	def enableSimulatedDataRollover(self, enable: bool = True):
+		"""
+		"""
+		self.enableDataRoll = enable
+		
 	def generateTelemetry(self) -> SensorData:
 		"""
 		Creates a SensorData instance with the current simulator value
@@ -83,7 +89,10 @@ class BaseSensorTask(ISensorTask):
 			self.dataSetIndex = self.dataSetIndex + 1
 			
 			if self.dataSetIndex >= self.dataSet.getDataEntryCount() - 1:
-				self.dataSetIndex = 0
+				if (self.enableDataRoll):
+					self.dataSetIndex = 0
+				else:
+					self.dataSetIndex = self.dataSet.getDataEntryCount() - 1
 				
 		sensorData.setValue(sensorVal)
 		

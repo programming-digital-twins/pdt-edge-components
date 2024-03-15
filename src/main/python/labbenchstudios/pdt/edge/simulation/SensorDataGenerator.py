@@ -195,6 +195,56 @@ class SensorDataGenerator(object):
 		
 		return self.generateDailySensorDataSet(curveType = self.DEFAULT_TEMP_CURVE, noiseLevel = noiseLevel, minValue = minValue, maxValue = maxValue, startHour = 0, endHour = 24, useSeconds = useSeconds)
 		
+	def generateTrendingSensorDataSet(self, trendUpwards: bool = False, minValue: float = DEFAULT_MIN_VALUE, maxValue: float = DEFAULT_MAX_VALUE, startHour: int = 0, endHour: int = 1, samplesPerHour: int = 60):
+		"""
+		Generates a time-series data set. This call will use the parameters to generate
+		time-series data that includes the ordered time points and their values stored
+		within a SensorDataSet instance.
+		
+		@param: minValue The minimum value, or floor, of the data. Defaults to DEFAULT_MIN_VALUE.
+		If greater than maxValue, will be set to maxValue.
+		@param: maxValue The maximum value, or ceiling, of the data. Defaults to DEFAULT_MAX_VALUE.
+		If less than minValue, will be set to minValue.
+		@param: startHour The beginning hour. Must be between MIN_HOURS and MAX_HOURS.
+		If less than MIN_HOURS or greater than MAX_HOURS, will be set to MIN_HOURS.
+		If greater than endHour, will be set to endHour.
+		@param: endHour The ending hour. Must be between MIN_HOURS and MAX_HOURS.
+		If less than MIN_HOURS or greater than MAX_HOURS, will be set to MAX_HOURS.
+		If less than startHour, will be set to MAX_HOURS.
+		@param: useSeconds Defaults to False. If True, the data set will be generated using
+		second-level granularity; that is, one data pair for every second between
+		startHour and endHour.
+		@return SensorDataSet The sensor data set containing both time entries and data
+		values for those time entries.
+		"""
+		if maxValue < self.MIN_MONITOR_TEMP or maxValue > self.MAX_MONITOR_TEMP: maxValue = self.MAX_MONITOR_TEMP
+		if minValue < self.MIN_MONITOR_TEMP or minValue >= maxValue: minValue = maxValue - 1
+		
+		# TODO: allow samples per hour to be configured based on the
+		#       delta between start hour and end hour
+		#       e.g., if we're generating samples for a 1 degree change in
+		#             temp it should take less time than moving 10 degrees -
+		#             currently, the algorithim generates the same number
+		#             of samples regardless of the min / max span
+		if samplesPerHour < 1: samplesPerHour = 1
+
+		totalSamples = abs(abs(startHour) - abs(endHour)) * samplesPerHour
+		timeEntries = calcLib.linspace(start = startHour, stop = endHour, num = totalSamples)
+		dataValues = calcLib.sin(timeEntries / self.dayDenominator)
+
+		rawScaledValues = calcLib.interp(dataValues, (dataValues.min(), dataValues.max()), (minValue, maxValue))
+		dataSet = SensorDataSet(epochOffsetSeconds = self.epochOffsetSeconds, useCurrentTime = self.useCurrentTime, timeEntries = timeEntries)
+		scaledValues = None
+
+		if (trendUpwards):
+			scaledValues = rawScaledValues
+		else:
+			scaledValues = calcLib.sort(rawScaledValues)[::-1]
+
+		dataSet.setDataEntries(scaledValues)
+
+		return dataSet
+		
 	def generateDailySensorDataSet(self, curveType: int = FULL_WAVE, noiseLevel: int = DEFAULT_NOISE, minValue: float = DEFAULT_MIN_VALUE, maxValue: float = DEFAULT_MAX_VALUE, startHour: int = MIN_HOURS, endHour: int = MAX_HOURS, useSeconds = False):
 		"""
 		Generates a time-series data set. This call will use the parameters to generate

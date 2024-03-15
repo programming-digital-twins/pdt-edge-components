@@ -35,6 +35,9 @@ from labbenchstudios.pdt.common.IDataManager import IDataManager
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
 from labbenchstudios.pdt.common.ResourceNameEnum import ResourceNameEnum
 
+from labbenchstudios.pdt.data.ActuatorData import ActuatorData
+from labbenchstudios.pdt.data.SensorData import SensorData
+
 from labbenchstudios.pdt.edge.simulation.SensorDataGenerator import SensorDataGenerator
 from labbenchstudios.pdt.edge.simulation.HumiditySensorSimTask import HumiditySensorSimTask
 from labbenchstudios.pdt.edge.simulation.TemperatureSensorSimTask import TemperatureSensorSimTask
@@ -181,6 +184,59 @@ class SensorAdapterManager(IDataManager):
 			
 			return False
 		
+	def updateSimulationData(self, data: ActuatorData = None):
+		"""
+		"""
+		if data and self.useSimulator:
+			logging.info("Updating simulator data set: " + data.getName())
+
+			if data.getTypeID() == ConfigConst.THERMOSTAT_TYPE:
+				simData = \
+					self._generateTrendingSimulationData( \
+						self.tempAdapter.getLatestTelemetry(), data.getValue())
+				
+				self.tempAdapter = None
+				self.tempAdapter = TemperatureSensorSimTask(dataSet = simData)
+				self.tempAdapter.enableSimulatedDataRollover(enable = False)
+
+			elif data.getTypeID() == ConfigConst.HUMIDIFIER_TYPE:
+				simData = \
+					self._generateTrendingSimulationData( \
+						self.humidityAdapter.getLatestTelemetry(), data.getValue())
+				
+				self.humidityAdapter = None
+				self.humidityAdapter = HumiditySensorSimTask(dataSet = simData)
+				self.humidityAdapter.enableSimulatedDataRollover(enable = False)
+
+	def _generateTrendingSimulationData(self, sensorData: SensorData = None, targetVal: float = 0.0):
+		"""
+		"""
+		if sensorData:
+			self.dataGenerator = SensorDataGenerator()
+
+			curVal = sensorData.getValue()
+			minVal = curVal
+			maxVal = curVal
+			raiseTemp = False
+
+			if (curVal > targetVal):
+				minVal = targetVal
+				maxVal = curVal
+				raiseTemp = False
+
+			if (curVal < targetVal):
+				minVal = curVal
+				maxVal = targetVal
+				raiseTemp = True
+
+			simData = \
+				self.dataGenerator.generateTrendingSensorDataSet( \
+					trendUpwards = raiseTemp, minValue = minVal, maxValue = maxVal)
+			
+			return simData
+		
+		return None
+	
 	def _initEnvironmentalSensorTasks(self):
 		"""
 		Instantiates the environmental sensor tasks based on the configuration file

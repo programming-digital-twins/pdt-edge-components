@@ -191,12 +191,8 @@ class MqttClientConnector(IPubSubClient):
 			
 	def onActuatorCommandMessage(self, client, userdata, msg):
 		"""
-		This callback is defined as a convenience, but does not
-		need to be used and can be ignored.
-		
-		It's simply an example for how you can create your own
-		custom callback for incoming messages from a specific
-		topic subscription (such as for actuator commands).
+		This callback is used to process incoming actuator events
+		from the subscribed ActuatorCmd topic.
 		
 		@param client The client reference context.
 		@param userdata The user reference context.

@@ -41,6 +41,7 @@ from labbenchstudios.pdt.data.ActuatorData import ActuatorData
 from labbenchstudios.pdt.edge.simulation.HvacActuatorSimTask import HvacActuatorSimTask
 from labbenchstudios.pdt.edge.simulation.HumidifierActuatorSimTask import HumidifierActuatorSimTask
 from labbenchstudios.pdt.edge.simulation.LedDisplaySimTask import LedDisplaySimTask
+from labbenchstudios.pdt.edge.simulation.ThermostatActuatorSimTask import ThermostatActuatorSimTask
 
 class ActuatorAdapterManager(IDataManager):
 	"""
@@ -79,6 +80,7 @@ class ActuatorAdapterManager(IDataManager):
 		
 		self.humidifierActuator = None
 		self.hvacActuator       = None
+		self.thermostatActuator = None
 		self.ledDisplayActuator = None
 		
 		#
@@ -158,6 +160,14 @@ class ActuatorAdapterManager(IDataManager):
 							self.ledDisplayActuator.updateActuator(data)
 
 					elif aType == \
+						ConfigConst.THERMOSTAT_TYPE and self.thermostatActuator:
+						responseData = self.thermostatActuator.updateActuator(data)
+
+						if updateDisplayOnActuation:
+							data.setStateData(data.getName() + ': ' + str(data.getValue()))
+							self.ledDisplayActuator.updateActuator(data)
+
+					elif aType == \
 						ConfigConst.LED_DISPLAY_ACTUATOR_TYPE and self.ledDisplayActuator:
 						responseData = self.ledDisplayActuator.updateActuator(data)
 
@@ -231,6 +241,9 @@ class ActuatorAdapterManager(IDataManager):
 			# create the HVAC actuator
 			self.hvacActuator = HvacActuatorSimTask()
 			
+			# create the Thermostat actuator
+			self.thermostatActuator = ThermostatActuatorSimTask()
+			
 			# create the LED actuator simulator
 			self.ledDisplayActuator = LedDisplaySimTask()
 			
@@ -249,6 +262,10 @@ class ActuatorAdapterManager(IDataManager):
 			hveModule = import_module('labbenchstudios.pdt.edge.emulation.HvacActuatorEmulatorTask', 'HvacActuatorEmulatorTask')
 			hveClazz = getattr(hveModule, 'HvacActuatorEmulatorTask')
 			self.hvacActuator = hveClazz()
+
+			thermModule = import_module('labbenchstudios.pdt.edge.emulation.ThermostatActuatorEmulatorTask', 'ThermostatActuatorEmulatorTask')
+			thermClazz = getattr(thermModule, 'ThermostatActuatorEmulatorTask')
+			self.thermostatActuator = thermClazz()
 
 			leDisplayModule = import_module('labbenchstudios.pdt.edge.emulation.LedActuatorDisplayEmulatorTask', 'LedActuatorDisplayEmulatorTask')
 			leClazz = getattr(leDisplayModule, 'LedActuatorDisplayEmulatorTask')
