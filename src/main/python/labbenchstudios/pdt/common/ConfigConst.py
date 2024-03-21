@@ -107,8 +107,18 @@ ELEVATION_PROP   = 'elevation'
 
 COMMAND_PROP     = 'command'
 STATE_DATA_PROP  = 'stateData'
-VALUE_PROP       = 'value'
 IS_RESPONSE_PROP = 'isResponse'
+
+DATA_VALUES_PROP  = 'dataValues'
+UNIT_PROP         = 'unit'
+VALUE_PROP        = 'value'
+TARGET_VALUE_PROP = 'targetValue'
+RANGE_NOMINAL_FLOOR_PROP   = 'rangeNominalFloor'
+RANGE_NOMINAL_CEILING_PROP = 'rangeNominalCeiling'
+RANGE_MAX_FLOOR_PROP       = 'rangeMaxFloor'
+RANGE_MAX_CEILING_PROP     = 'rangeMaxCeiling'
+NOMINAL_VALUE_DELTA_PROP   = 'nominalValueDelta'
+MAX_VALUE_DELTA_PROP       = 'maxValueDelta'
 
 CPU_UTIL_PROP    = 'cpuUtil'
 DISK_UTIL_PROP   = 'diskUtil'
@@ -167,9 +177,15 @@ PRESSURE_SENSOR_NAME = 'Barometer'
 TEMP_SENSOR_NAME     = 'Thermostat'
 THERMOSTAT_NAME      = 'Thermostat'
 HVAC_NAME            = 'HVAC'
+WIND_TURBINE_NAME    = 'WindTurbine'
 SYSTEM_MGMT_NAME     = 'EdgeComputingDevice'
 SYSTEM_PERF_NAME     = 'EdgeComputingDevice'
 CAMERA_SENSOR_NAME   = 'Camera'
+
+POWER_OUTPUT_NAME     = 'PowerOutput'
+ROTATIONAL_SPEED_NAME = 'RotationalSpeed'
+WIND_SPEED_NAME       = 'WindSpeed'
+BRAKE_SYSTEM_NAME     = 'BrakeSystem'
 
 COMMAND_ON  = 1
 COMMAND_OFF = 2
@@ -217,10 +233,13 @@ FLUID_PUMP_TYPE              = 4103
 IMPELLER_RPM_SENSOR_TYPE     = 4105
 IMPELLER_RPM_ACTUATOR_TYPE   = 4107
 
-POWER_WINDMILL_SYSTEM_TYPE   = 4200
-POWER_OUTPUT_SENSOR_TYPE     = 4201
-GENERATOR_TEMP_SENSOR_TYPE   = 4202
-ROTATIONAL_SPEED_SENSOR_TYPE = 4203
+WIND_TURBINE_SYSTEM_TYPE     = 4200
+WIND_TURBINE_POWER_OUTPUT_SENSOR_TYPE   = 4201
+WIND_TURBINE_GENERATOR_TEMP_SENSOR_TYPE = 4202
+WIND_TURBINE_HUB_SPEED_SENSOR_TYPE      = 4203
+WIND_TURBINE_AIR_SPEED_SENSOR_TYPE      = 4204
+
+WIND_TURBINE_BRAKE_SYSTEM_ACTUATOR_TYPE = 4301
 
 ENERGY_TYPE_CATEGORY = 5000
 STORAGE_LEVEL = 5001
@@ -353,10 +372,14 @@ ENABLE_MQTT_CLIENT_KEY = 'enableMqttClient'
 ENABLE_COAP_CLIENT_KEY = 'enableCoapClient'
 ENABLE_COAP_SERVER_KEY = 'enableCoapServer'
 
+ENABLE_POWER_GENERATION_KEY = 'enablePowerGeneration'
 ENABLE_SYSTEM_PERF_KEY = 'enableSystemPerformance'
 ENABLE_SENSING_KEY     = 'enableSensing'
 
 UPDATE_DISPLAY_ON_ACTUATION_KEY = 'updateDisplayOnActuation'
+
+MIN_WIND_SPEED_KEY       = 'minWindSpeed'
+MAX_WIND_SPEED_KEY       = 'maxWindSpeed'
 
 HUMIDITY_SIM_FLOOR_KEY   = 'humiditySimFloor'
 HUMIDITY_SIM_CEILING_KEY = 'humiditySimCeiling'
@@ -366,8 +389,8 @@ TEMP_SIM_FLOOR_KEY       = 'tempSimFloor'
 TEMP_SIM_CEILING_KEY     = 'tempSimCeiling'
 
 HANDLE_TEMP_CHANGE_ON_DEVICE_KEY = 'handleTempChangeOnDevice'
-TRIGGER_HVAC_TEMP_FLOOR_KEY   = 'triggerHvacTempFloor'
-TRIGGER_HVAC_TEMP_CEILING_KEY = 'triggerHvacTempCeiling'
+TRIGGER_HVAC_TEMP_FLOOR_KEY      = 'triggerHvacTempFloor'
+TRIGGER_HVAC_TEMP_CEILING_KEY    = 'triggerHvacTempCeiling'
 
 RUN_FOREVER_KEY    = 'runForever'
 TEST_EMPTY_APP_KEY = 'testEmptyApp'

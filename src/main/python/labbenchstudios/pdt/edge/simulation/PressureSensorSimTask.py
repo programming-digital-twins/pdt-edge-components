@@ -34,7 +34,7 @@ from labbenchstudios.pdt.data.SensorData import SensorData
 class PressureSensorSimTask(BaseSensorTask):
 	"""
 	This is a simple wrapper for a Simulator abstraction - it provides
-	a container for the simulator's state, value, name, and status.s
+	a container for the simulator's state, value, name, and status.
 	
 	"""
 

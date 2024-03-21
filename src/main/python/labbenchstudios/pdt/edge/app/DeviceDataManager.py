@@ -28,6 +28,7 @@ from time import sleep
 from labbenchstudios.pdt.edge.connection.InfluxClientConnector import InfluxClientConnector
 from labbenchstudios.pdt.edge.connection.MqttClientConnector import MqttClientConnector
 
+from labbenchstudios.pdt.edge.system.WindTurbineAdapterManager import WindTurbineAdapterManager
 from labbenchstudios.pdt.edge.system.ActuatorAdapterManager import ActuatorAdapterManager
 from labbenchstudios.pdt.edge.system.SensorAdapterManager import SensorAdapterManager
 from labbenchstudios.pdt.edge.system.SystemPerformanceManager import SystemPerformanceManager
@@ -62,6 +63,10 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		self.configUtil = ConfigUtil()
 		
+		self.enablePowerGeneration   = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_POWER_GENERATION_KEY)
+			
 		self.enableSystemPerf   = \
 			self.configUtil.getBoolean( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SYSTEM_PERF_KEY)
@@ -83,6 +88,7 @@ class DeviceDataManager(IDataMessageListener):
 		
 		self.tsdbClient         = None
 		self.mqttClient         = None
+		self.windTurbineMgr        = None
 		self.sysPerfMgr         = None
 		self.sensorAdapterMgr   = None
 		self.actuatorAdapterMgr = None
@@ -96,6 +102,11 @@ class DeviceDataManager(IDataMessageListener):
 			self.mqttClient.setDataMessageListener(self)
 			logging.info("MQTT connector enabled")
 			
+		if self.enablePowerGeneration:
+			self.windTurbineMgr = WindTurbineAdapterManager()
+			self.windTurbineMgr.setDataMessageListener(self)
+			logging.info("Local wind turbine management enabled")
+		
 		if self.enableSystemPerf:
 			self.sysPerfMgr = SystemPerformanceManager()
 			self.sysPerfMgr.setDataMessageListener(self)
@@ -193,6 +204,10 @@ class DeviceDataManager(IDataMessageListener):
 			#   the actuation event
 			if self.sensorAdapterMgr:
 				self.sensorAdapterMgr.updateSimulationData(data = data)
+
+			if self.windTurbineMgr:
+				if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
+					self.windTurbineMgr.updateSimulationData(data = data)
 
 			return self.actuatorAdapterMgr.sendActuatorCommand(data = data)
 		else:
@@ -313,6 +328,9 @@ class DeviceDataManager(IDataMessageListener):
 		if self.mqttClient:
 			self.mqttClient.connectClient()
 		
+		if self.windTurbineMgr:
+			self.windTurbineMgr.startManager()
+
 		if self.sysPerfMgr:
 			self.sysPerfMgr.startManager()
 		
@@ -332,6 +350,9 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		logging.info("Stopping DeviceDataManager...")
 		
+		if self.windTurbineMgr:
+			self.windTurbineMgr.stopManager()
+
 		if self.sysPerfMgr:
 			self.sysPerfMgr.stopManager()
 		

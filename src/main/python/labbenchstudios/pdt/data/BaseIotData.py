@@ -236,12 +236,12 @@ class BaseIotData(object):
 		"""
 		if data and isinstance(data, BaseIotData):
 			self.setName(data.getName())
+			self.setLocationID(data.getLocationID())
 			self.setTypeID(data.getTypeID())
 			self.setStatusCode(data.getStatusCode())
 			self.setElevation(data.getElevation())
 			self.setLatitude(data.getLatitude())
 			self.setLongitude(data.getLongitude())
-			self.setLocationID(data.getLocationID())
 			
 			self.updateTimeStamp()
 			

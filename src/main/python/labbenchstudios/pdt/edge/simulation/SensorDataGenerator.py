@@ -195,6 +195,27 @@ class SensorDataGenerator(object):
 		
 		return self.generateDailySensorDataSet(curveType = self.DEFAULT_TEMP_CURVE, noiseLevel = noiseLevel, minValue = minValue, maxValue = maxValue, startHour = 0, endHour = 24, useSeconds = useSeconds)
 		
+	def generateOscillatingSensorDataSet(self, noiseLevel: int = DEFAULT_NOISE, minValue: float = 0.0, maxValue: float = 1000.0, useSeconds: bool = False):
+		"""
+		Generates a time-series data set for an arbitrary oscillating simulation over a 24-hour period.
+		
+		@param: noiseLevel Any positive integer between 0 (no noise) and 100 (max noise).
+		Defaults to DEFAULT_NOISE (some noise).
+		@param: minValue Defaults to 0.0. If equal to or greater than maxValue,
+		will be set to maxValue - 1.
+		@param: maxValue Defaults to 1000.0. If less than or equal to minValue,
+		will be set to minValue + 1.
+		@param: useSeconds Defaults to False. If True, the data set will be generated using
+		second-level granularity; that is, one data pair for every second between
+		startHour and endHour.
+		@return SensorDataSet The sensor data set containing both time entries and data
+		values for those time entries.
+		"""
+		if maxValue < minValue: maxValue = minValue + 1
+		if minValue > maxValue: minValue = maxValue - 1
+		
+		return self.generateDailySensorDataSet(curveType = self.FULL_WAVE, noiseLevel = noiseLevel, minValue = minValue, maxValue = maxValue, startHour = 0, endHour = 24, useSeconds = useSeconds)
+
 	def generateTrendingSensorDataSet(self, trendUpwards: bool = False, minValue: float = DEFAULT_MIN_VALUE, maxValue: float = DEFAULT_MAX_VALUE, startHour: int = 0, endHour: int = 1, samplesPerHour: int = 60):
 		"""
 		Generates a time-series data set. This call will use the parameters to generate

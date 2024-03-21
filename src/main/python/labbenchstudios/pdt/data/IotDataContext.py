@@ -64,7 +64,7 @@ class IotDataContext(BaseIotData):
 	
 		@return The device ID as a String. Default is {@see ConfigConst.NOT_SET}
 		"""
-		return self.deviceID;
+		return self.deviceID
 	
 	def getTypeCategoryID(self):
 		"""
@@ -74,7 +74,7 @@ class IotDataContext(BaseIotData):
 	
 		@return int
 		"""
-		return self.typeCategoryID;
+		return self.typeCategoryID
 	
 	def setDeviceID(self, idStr: str = None):
 		"""
@@ -87,7 +87,7 @@ class IotDataContext(BaseIotData):
 		@param name The string-based name to set.
 		"""
 		if idStr and len(idStr) > 0:
-			self.deviceID = idStr;
+			self.deviceID = idStr
 	
 	def setTypeCategoryID(self, val: int = ConfigConst.DEFAULT_TYPE_ID):
 		"""

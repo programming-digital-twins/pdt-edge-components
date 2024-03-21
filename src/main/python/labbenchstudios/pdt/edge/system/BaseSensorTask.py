@@ -94,7 +94,7 @@ class BaseSensorTask(ISensorTask):
 				else:
 					self.dataSetIndex = self.dataSet.getDataEntryCount() - 1
 				
-		sensorData.setValue(sensorVal)
+		sensorData.setValue(self._generateSensorReading(sensorVal))
 		
 		self.latestSensorData = sensorData
 		
@@ -154,3 +154,9 @@ class BaseSensorTask(ISensorTask):
 			self.generateTelemetry()
 		
 		return self.latestSensorData.getValue()
+
+	def _generateSensorReading(self, val: float) -> float:
+		"""
+		"""
+		return val
+	
