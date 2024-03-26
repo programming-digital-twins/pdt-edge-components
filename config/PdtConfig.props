@@ -14,7 +14,6 @@
 # NOTE: Use the fully qualified path
 credFile       = /mnt/d/pdt/pdt-edge-components/cred/PdtMqttLocalCred.props
 certFile       = /mnt/d/pdt/pdt-edge-components/cert/PdtMqttLocalCertFile.pem
-#host           = 192.168.4.105
 host           = localhost
 port           = 1883
 securePort     = 8883
@@ -29,7 +28,7 @@ enableCrypt    = False
 [Data.GatewayService]
 # NOTE: Use the fully qualified path
 credFile       = /mnt/d/pdt/pdt-edge-components/cred/PdtInfluxCred.props
-host           = 192.168.4.105
+host           = localhost
 port           = 8086
 securePort     = 8886
 enableAuth     = True
@@ -50,6 +49,7 @@ enableEmulator   = False
 enableSenseHAT   = False
 enableMqttClient = True
 enableTsdbClient = False
+enablePowerGeneration = True
 enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True
@@ -72,4 +72,3 @@ tempSimCeiling     =   25.0
 handleTempChangeOnDevice = True
 triggerHvacTempFloor     = 18.0
 triggerHvacTempCeiling   = 20.0
-
