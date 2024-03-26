@@ -9,10 +9,13 @@ sense-emu
 pisense
 
 # Imports related to PIOT: Chapters 06 and later
-paho-mqtt
+paho-mqtt<2.0.0
 
 # Imports related to PDT storage
 influxdb-client[ciso]
 
 # Imports specific to PDT
 azure-iot-modelsrepository
+
+# Imports specific to PDT wind energy
+windpowerlib
