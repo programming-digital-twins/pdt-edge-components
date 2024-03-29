@@ -42,7 +42,7 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		super( \
 			WindTurbineSensorSimTask, self).__init__( \
 				name = ConfigConst.WIND_TURBINE_NAME, \
-				typeID = ConfigConst.WIND_TURBINE_AIR_SPEED_SENSOR_TYPE, \
+				typeID = ConfigConst.WIND_SYSTEM_TYPE, \
 				typeCategoryID = ConfigConst.ENERGY_TYPE_CATEGORY, \
 				dataSet = dataSet,
 				minVal = 5.0,
@@ -60,7 +60,7 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		"""
 		sensorData = SensorData()
 		sensorData.updateData(self.getLatestTelemetry())
-		#sensorData.setName(ConfigConst.POWER_OUTPUT_NAME)
+		sensorData.setTypeName(ConfigConst.POWER_OUTPUT_NAME)
 		sensorData.setTypeID(ConfigConst.WIND_TURBINE_POWER_OUTPUT_SENSOR_TYPE)
 		sensorData.setTypeCategoryID(self.getTypeCategoryID())
 		sensorData.setValue(self.getPowerOutput())
@@ -71,8 +71,8 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		"""
 		"""
 		sensorData = SensorData()
-		sensorData.updateData(self.latestSensorData)
-		#sensorData.setName(ConfigConst.ROTATIONAL_SPEED_NAME)
+		sensorData.updateData(self.getLatestTelemetry())
+		sensorData.setTypeName(ConfigConst.ROTATIONAL_SPEED_NAME)
 		sensorData.setTypeID(ConfigConst.WIND_TURBINE_HUB_SPEED_SENSOR_TYPE)
 		sensorData.setTypeCategoryID(self.getTypeCategoryID())
 		sensorData.setValue(self.getCalculatedRotorHubRpm())
@@ -84,7 +84,7 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		"""
 		sensorData = SensorData()
 		sensorData.updateData(self.getLatestTelemetry())
-		#sensorData.setName(ConfigConst.WIND_SPEED_NAME)
+		sensorData.setTypeName(ConfigConst.WIND_SPEED_NAME)
 		sensorData.setTypeID(ConfigConst.WIND_TURBINE_AIR_SPEED_SENSOR_TYPE)
 		sensorData.setTypeCategoryID(self.getTypeCategoryID())
 		sensorData.setValue(self.getWindSpeed())
@@ -109,7 +109,10 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 	def getPowerOutput(self) -> float:
 		"""
 		"""
-		return self.powerOutput
+		if (self.enableBraking):
+			return 0.0
+		else:
+			return self.powerOutput
 	
 	def getRotorDiameter(self) -> float:
 		"""
@@ -129,12 +132,18 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 	def getCalculatedRotorHubRpm(self) -> float:
 		"""
 		"""
-		return self.rotorHubRpm
+		if (self.enableBraking):
+			return 0.0
+		else:
+			return self.rotorHubRpm
 	
 	def getCalculatedRotorTipSpeed(self) -> float:
 		"""
 		"""
-		return self.rotorTipSpeed
+		if (self.enableBraking):
+			return 0.0
+		else:
+			return self.rotorTipSpeed
 	
 	def _generateSensorReading(self, windSpeed: float = ConfigConst.DEFAULT_VAL) -> float:
 		"""
@@ -172,15 +181,15 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		#            for Digital Twin testing, cut-in and cut-out processes
 		#            will be managed in the DTA
 
-		if (self.enableBraking):
-			self.rotorTipSpeed = 0.0
-			self.rotorHubRpm = 0.0
-		else:
+		if (self.rotorCircumference > 0.0):
 			self.rotorTipSpeed = (60 * self.windSpeed * self.optimalTSR) / self.rotorCircumference
+
+		if (self.rotorTipSpeed > 0.0 and self.hubCircumference > 0.0):
 			self.rotorHubRpm = self.rotorTipSpeed / self.hubCircumference
 
-		self.powerOutput = \
-			self.maxPowerCoeff * (self.airDensity / 2) * self.rotorSweptArea * (pow(self.windSpeed, 3))
+		if (self.airDensity > 0.0):
+			self.powerOutput = \
+				self.maxPowerCoeff * (self.airDensity / 2) * self.rotorSweptArea * (pow(self.windSpeed, 3))
 		
 		logging.debug("\nCalculated wind turbine power output:" \
 				"\n\tmaxPowerCoeff:    " + str(self.getMaxPowerCoefficient()) +
@@ -193,8 +202,6 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 				"\n\tenableBraking:    " + str(self.enableBraking) +
 				"\n\t")
 
-		self.latestSensorData = sensorData
-		
 		return self.windSpeed
 	
 	def _initDefaultValues(self):

@@ -41,23 +41,26 @@ class ConfigUtil(metaclass = Singleton):
 	Implemented as a Singleton using the Singleton metaclass.
 	
 	"""
+	enableConfigFileSearch = True
 
-	configFile   = ConfigConst.DEFAULT_CONFIG_FILE_NAME
+	configFile   = None
 	configParser = configparser.ConfigParser()
 	isLoaded	 = False
-	
+
+	failedLoadCounter = 0
+
 	def __init__(self, configFile: str = None):
 		"""
 		Constructor for ConfigUtil.
 		
 		@param configFile The name of the configuration file to load.
 		"""
-		if (configFile != None):
-			self.configFile = configFile
-			
-		self._loadConfig()
-		logging.info("Created instance of ConfigUtil: " + str(self))
+		self.configFile = configFile
+
+		logging.info("Creating instance of ConfigUtil: %s", self.configFile)
 	
+		self._loadConfig()
+
 	#
 	# public methods
 	#
@@ -194,26 +197,6 @@ class ConfigUtil(metaclass = Singleton):
 	# private methods
 	#
 	
-	def _loadConfig(self):
-		"""
-		Attempts to load the config file using the name passed into
-		the constructor.
-		 
-		"""
-		if (os.path.exists(self.configFile)):
-			logging.info("Loading config: %s", self.configFile)
-			
-			self.configParser.read(self.configFile)
-			self.isLoaded = True
-		else:
-			logging.info("Can't load %s. Trying default: %s", self.configFile, ConfigConst.DEFAULT_CONFIG_FILE_NAME)
-			
-			self.configFile = ConfigConst.DEFAULT_CONFIG_FILE_NAME
-			self.configParser.read(self.configFile)
-			self.isLoaded = True
-		
-		logging.debug("Config: %s", str(self.configParser.sections()))
-
 	def _getConfig(self, forceReload: bool = False) -> configparser:
 		"""
 		Returns the entire configuration object. If the config file hasn't
@@ -227,3 +210,69 @@ class ConfigUtil(metaclass = Singleton):
 		
 		return self.configParser
 	
+	def _loadConfig(self):
+		"""
+		Attempts to load the config file using the name passed into
+		the constructor.
+		 
+		"""
+		if (self.failedLoadCounter == 0):
+			if (self.configFile):
+				# try to load the config file requested
+				self._loadConfigFile(self.configFile)
+
+			elif (self.enableConfigFileSearch):
+				# if no config file is specified, search upwards for the
+				# 'config' path and - if found - try to load the default
+				# config file name (ConfigConst.CONFIG_FILE)
+				logging.info("Attempting to locate %s.", ConfigConst.CONFIG_FILE)
+				self._locateAndInitDefaultConfigFileName()
+
+		if (not self.isLoaded):
+			self.failedLoadCounter += 1
+		
+	def _loadConfigFile(self, configFile):
+		"""
+		"""
+		if (configFile):
+			if (os.path.exists(configFile)):
+				logging.info("Attempting to load config file: %s", configFile)
+
+				try:
+					self.configParser.read(configFile)
+					self.isLoaded = True
+
+					# set the configuration file
+					self.configFile = configFile
+
+					logging.info("Successfully loaded configuration at %s.", self.configFile)
+					logging.debug("Config: %s", str(self.configParser.sections()))
+
+				except:
+					logging.error("Failed to load requested config file at %s.", configFile)
+			else:
+				logging.error("No file exists for requested config file %s.", configFile)
+	
+	def _locateAndInitDefaultConfigFileName(self):
+		"""
+		"""
+		modulePath = os.path.dirname(__file__)
+		parentPaths = Path(modulePath).parents
+		parentPathCount = len(parentPaths)
+
+		for i in range(parentPathCount):
+			configFile = \
+				os.path.abspath( \
+					os.path.join( \
+						parentPaths[i], \
+						'config', \
+						ConfigConst.CONFIG_FILE))
+			
+			logging.info("Searching path %s for config file.", configFile)
+
+			if (os.path.exists(configFile)):
+				logging.info("Found configuration file at %s", configFile)
+
+				self._loadConfigFile(configFile)
+
+				return

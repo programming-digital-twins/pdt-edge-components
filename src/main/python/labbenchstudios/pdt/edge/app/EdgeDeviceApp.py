@@ -22,7 +22,9 @@
 # SOFTWARE.
 #
 
+import argparse
 import logging
+import os
 
 from time import sleep
 
@@ -46,9 +48,15 @@ class EdgeDeviceApp():
 		@param path The name of the resource to apply to the URI.
 		"""
 		logging.info("Initializing EDA...")
-		
+
+		self.isStarted = False
 		self.dataMgr = DeviceDataManager()
 
+	def isAppStarted(self) -> bool:
+		"""
+		"""
+		return self.isStarted
+	
 	def startApp(self):
 		"""
 		Start the CDA. Calls startManager() on the device data manager instance.
@@ -56,50 +64,91 @@ class EdgeDeviceApp():
 		"""
 		logging.info("Starting EDA...")
 		
-		self.dataMgr.startManager()
-		
-		logging.info("EDA started.")
+		configUtil = ConfigUtil()
+
+		if (configUtil.isConfigDataLoaded()):
+			self.dataMgr.startManager()
+			self.isStarted = True
+
+			logging.info("EDA started.")
+		else:
+			logging.error("Failed to load config file and properly initialize app. EDA not started.")
 
 	def stopApp(self, code: int):
 		"""
 		Stop the EDA. Calls stopManager() on the device data manager instance.
 		
 		"""
-		logging.info("EDA stopping...")
-		
-		self.dataMgr.stopManager()
-		
-		logging.info("EDA stopped with exit code %s.", str(code))
-		
-	def parseArgs(self, args):
-		"""
-		Parse command line args.
-		
-		@param args The arguments to parse.
-		"""
-		logging.info("Parsing command line args...")
+		if (self.isStarted):
+			logging.info("EDA stopping...")
 
+			self.dataMgr.stopManager()
 
+			logging.info("EDA stopped with exit code %s.", str(code))
+		else:
+			logging.info("EDA not yet started.")
+
+			pass
+		
 def main():
 	"""
 	Main function definition for running client as application.
 	
 	Current implementation runs for 65 seconds then exits.
 	"""
-	cda = EdgeDeviceApp()
-	cda.startApp()
+	argParser = argparse.ArgumentParser( \
+		description = 'Edge Device Application for simulating data sets as part of the Building Digital Twins course.')
 	
-	runForever = ConfigUtil().getBoolean(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.RUN_FOREVER_KEY)
-	
-	if runForever:
-		while (True):
-			sleep(5)
+	argParser.add_argument('-c', '--configFile', help = 'Optional custom configuration file for the EDA.')
+
+	configFile = None
+
+	try:
+		args = argParser.parse_args()
+		configFile = args.configFile
+
+		logging.info('Parsed configuration file arg: %s', configFile)
+	except:
+		logging.info('No arguments to parse.')
+
+	# init ConfigUtil
+	configUtil = ConfigUtil(configFile)
+	eda = None
+
+	try:
+		# init EDA
+		eda = EdgeDeviceApp()
+
+		# start EDA
+		eda.startApp()
+
+		# check if we should run forever
+		runForever = configUtil.getBoolean(ConfigConst.EDGE_DEVICE, ConfigConst.RUN_FOREVER_KEY)
+
+		if runForever:
+			while (True):
+				sleep(5)
 			
-	else:
-		sleep(65)
-		
-		# optionally stop the app - this can be removed if needed
-		cda.stopApp(0)
+		else:
+			if (eda.isAppStarted()):
+				sleep(65)
+				eda.stopApp(0)
+			
+	except KeyboardInterrupt:
+		logging.warning('Keyboard interruption for EDA. Exiting.')
+
+		if (eda):
+			eda.stopApp(-1)
+
+	except:
+		logging.error('Startup exception caused EDA to fail. Exiting.')
+
+		if (eda):
+			eda.stopApp(-2)
+
+	# unnecessary
+	logging.info('Exiting EDA.')
+	exit()
 
 if __name__ == '__main__':
 	"""
@@ -108,3 +157,10 @@ if __name__ == '__main__':
 	"""
 	main()
 	
+def parseArgs(self, args):
+	"""
+	Parse command line args.
+	
+	@param args The arguments to parse.
+	"""
+	logging.info("Parsing command line args...")

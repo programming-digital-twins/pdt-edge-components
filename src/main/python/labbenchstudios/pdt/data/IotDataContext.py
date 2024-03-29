@@ -51,6 +51,7 @@ class IotDataContext(BaseIotData):
 			except:
 				pass
 			
+		self.typeName = ConfigConst.NOT_SET
 		self.typeCategoryID = typeCategoryID
 
 		# always pull device ID from configuration file
@@ -76,6 +77,11 @@ class IotDataContext(BaseIotData):
 		"""
 		return self.typeCategoryID
 	
+	def getTypeName(self):
+		"""
+		"""
+		return self.typeName
+	
 	def setDeviceID(self, idStr: str = None):
 		"""
 		Sets the device ID as a string. This can be used as a user-friendly label
@@ -98,16 +104,23 @@ class IotDataContext(BaseIotData):
 		"""
 		self.typeCategoryID = val
 	
+	def setTypeName(self, name: str = ConfigConst.NOT_SET):
+		"""
+		"""
+		if (name):
+			self.typeName = name
+
 	def __str__(self):
 		"""
 		String override function.
 		
 		"""
-		s = BaseIotData.__str__(self) + ',{}={},{}={}'
+		s = BaseIotData.__str__(self) + ',{}={},{}={},{}={}'
 		
 		return s.format(
 			ConfigConst.DEVICE_ID_PROP, self.deviceID,
-			ConfigConst.TYPE_CATEGORY_ID_PROP, self.typeCategoryID)
+			ConfigConst.TYPE_CATEGORY_ID_PROP, self.typeCategoryID,
+			ConfigConst.TYPE_NAME_PROP, self.typeName)
 
 	def _handleUpdateData(self, data: BaseIotData = None):
 		"""
@@ -119,3 +132,4 @@ class IotDataContext(BaseIotData):
 		if data and isinstance(data, IotDataContext):
 			self.setDeviceID(data.getDeviceID())
 			self.setTypeCategoryID(data.getTypeCategoryID())
+			self.setTypeName(data.getTypeName())

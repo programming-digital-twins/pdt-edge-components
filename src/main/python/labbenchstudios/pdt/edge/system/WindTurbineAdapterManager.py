@@ -84,12 +84,18 @@ class WindTurbineAdapterManager(IDataManager):
 		self.windTurbineSimTask.enableBrakingSystem(enable = self.enableWindTurbineBraking)
 		self.windTurbineSimTask.generateTelemetry()
 
+		brakingStatus = "disabled"
+
+		if (self.enableWindTurbineBraking):
+			brakingStatus = "enabled"
+
 		powerOutputData     = self.windTurbineSimTask.getPowerOutputTelemetry()
 		rotationalSpeedData = self.windTurbineSimTask.getRotationalSpeedTelemetry()
 		windSpeedData       = self.windTurbineSimTask.getWindSpeedTelemetry()
 		
 		logging.debug( \
-			'Power output is %s kw, rotational speed is %s rpm, wind speed is %s m/s.', \
+			'Brake is %s: Power output is %s kw, rotational speed is %s rpm, wind speed is %s m/s.', \
+			brakingStatus, \
 			str(powerOutputData.getValue()), \
 			str(rotationalSpeedData.getValue()), \
 			str(windSpeedData.getValue()))
@@ -138,14 +144,21 @@ class WindTurbineAdapterManager(IDataManager):
 	def updateSimulationData(self, data: ActuatorData = None):
 		"""
 		"""
-		if data and self.useSimulator:
-			logging.info("Updating wind turbine simulated data set: " + data.getName())
+		if (data and self.useSimulator):
+			command = data.getCommand()
+			value = data.getValue()
 
-			if data.getTypeID() == ConfigConst.WIND_TURBINE_BRAKE_SYSTEM_ACTUATOR_TYPE:
-				if (data.getCommand() == ConfigConst.COMMAND_ON):
-					self.enableWindTurbineBraking = True
-				else:
-					self.enableWindTurbineBraking = False
+			logging.info( \
+				"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
+				data.getName(), str(data.getTypeID()), str(command), str(value))
+
+			if (command == ConfigConst.COMMAND_OFF):
+				logging.info("  --> ENABLING Wind Turbine Brake...")
+				self.enableWindTurbineBraking = True
+
+			elif (command == ConfigConst.COMMAND_ON):
+				logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
+				self.enableWindTurbineBraking = False
 
 	def _initWindTurbineSensorTasks(self):
 		"""
@@ -175,3 +188,30 @@ class WindTurbineAdapterManager(IDataManager):
 		
 	def _initSampleWindTurbine(self):
 		pass
+
+	def _generateOscillatingSimulationData(self, sensorData: SensorData = None, targetVal: float = 0.0):
+		"""
+		"""
+		if sensorData:
+			self.dataGenerator = SensorDataGenerator()
+
+			curVal = sensorData.getValue()
+			minVal = curVal
+			maxVal = curVal
+
+			if (curVal > targetVal):
+				minVal = targetVal
+				maxVal = curVal
+
+			if (curVal < targetVal):
+				minVal = curVal
+				maxVal = targetVal
+
+			simData = \
+				self.dataGenerator.generateOscillatingSensorDataSet( \
+					minValue = minVal, maxValue = maxVal)
+			
+			return simData
+		
+		return None
+	

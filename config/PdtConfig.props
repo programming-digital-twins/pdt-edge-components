@@ -54,7 +54,9 @@ enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True
 pollCycleSecs    = 5
+sendEventDisplayUpdates = False
 updateDisplayOnActuation = True
+
 # NOTE: Use the fully qualified path
 testCdaDataPath  = /tmp/cda-data
 testEmptyApp     = False

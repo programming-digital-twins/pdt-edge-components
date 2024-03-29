@@ -97,6 +97,7 @@ NAME_PROP        = 'name'
 DEVICE_ID_PROP   = 'deviceID'
 TYPE_CATEGORY_ID_PROP = 'typeCategoryID'
 TYPE_ID_PROP     = 'typeID'
+TYPE_NAME_PROP   = 'typeName'
 TIMESTAMP_PROP   = 'timeStamp'
 HAS_ERROR_PROP   = 'hasError'
 STATUS_CODE_PROP = 'statusCode'
@@ -305,8 +306,12 @@ CDA_SYSTEM_PERF_MSG_RESOURCE          = PRODUCT_NAME + '/' + CONSTRAINED_DEVICE 
 # NOTE: You may need to update these paths if you change
 # the directory structure for python-components
 
-DEFAULT_CONFIG_FILE_NAME = '/mnt/d/pdt/pdt-edge-components/config/PdtConfig.props'
-DEFAULT_CRED_FILE_NAME   = '/mnt/d/pdt/pdt-edge-components/cred/PdtCred.props'
+CONFIG_FILE = 'PdtConfig.props'
+CRED_FILE = 'PdtCred.props'
+#DEFAULT_CONFIG_FILE_NAME = '/mnt/d/pdt/pdt-edge-components/config/' + CONFIG_FILE
+#DEFAULT_CRED_FILE_NAME   = '/mnt/d/pdt/pdt-edge-components/cred/' + CRED_FILE
+DEFAULT_CONFIG_FILE_NAME = './config/' + CONFIG_FILE
+DEFAULT_CRED_FILE_NAME = './cred/' + CRED_FILE
 
 TEST_GDA_DATA_PATH_KEY = 'testGdaDataPath'
 TEST_CDA_DATA_PATH_KEY = 'testCdaDataPath'
@@ -376,6 +381,7 @@ ENABLE_POWER_GENERATION_KEY = 'enablePowerGeneration'
 ENABLE_SYSTEM_PERF_KEY = 'enableSystemPerformance'
 ENABLE_SENSING_KEY     = 'enableSensing'
 
+SEND_EVENT_DISPLAY_UPDATES_KEY = 'sendEventDisplayUpdates'
 UPDATE_DISPLAY_ON_ACTUATION_KEY = 'updateDisplayOnActuation'
 
 MIN_WIND_SPEED_KEY       = 'minWindSpeed'

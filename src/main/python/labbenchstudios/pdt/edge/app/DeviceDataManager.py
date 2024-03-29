@@ -65,34 +65,41 @@ class DeviceDataManager(IDataMessageListener):
 		
 		self.enablePowerGeneration   = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_POWER_GENERATION_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_POWER_GENERATION_KEY)
 			
 		self.enableSystemPerf   = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SYSTEM_PERF_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SYSTEM_PERF_KEY)
 			
 		self.enableSensing      = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
 		
 		self.enableMqttClient = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
 		
 		self.enableTsdbClient = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_TSDB_CLIENT_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_TSDB_CLIENT_KEY)
+		
+		self.enableEventBasedDisplayUpdates = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.SEND_EVENT_DISPLAY_UPDATES_KEY)
 		
 		# NOTE: this can also be retrieved from the configuration file
 		self.enableActuation    = True
-		
 		self.tsdbClient         = None
 		self.mqttClient         = None
 		self.windTurbineMgr        = None
 		self.sysPerfMgr         = None
 		self.sensorAdapterMgr   = None
 		self.actuatorAdapterMgr = None
-				
+		
+		self.actuatorResponseCache = None
+		self.sensorDataCache = None
+		self.sysPerfDataCache = None
+
 		if self.enableTsdbClient:
 			self.tsdbClient = InfluxClientConnector()
 			logging.info("TSDB connector enabled")
@@ -123,23 +130,23 @@ class DeviceDataManager(IDataMessageListener):
 		
 		self.deviceID     = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		
 		self.locationID   = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		
 		self.handleTempChangeOnDevice = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
 			
 		self.triggerHvacTempFloor     = \
 			self.configUtil.getFloat( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
 				
 		self.triggerHvacTempCeiling   = \
 			self.configUtil.getFloat( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
 	
 	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
 		"""
@@ -187,14 +194,13 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The ActuatorData message received.
 		@return bool True on success; False otherwise.
 		"""
-		logging.info("Actuator data: " + str(data))
-		
 		if data:
 			logging.info( \
 				"\n\nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" \
 				"\n\nProcessing actuator command message." \
 				"\n\tState: " + str(data.getStateData()) + \
 				"\n\tValue: " + str(data.getValue()) + \
+				"\n\tData:  " + str(data) + \
 				"\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n")
 			
 			# we need to do two things:
@@ -202,14 +208,21 @@ class DeviceDataManager(IDataMessageListener):
 			#   as this command may reset the simulation dataset
 			# - notify our actuator manager so it can handle
 			#   the actuation event
+			isHandled = False
+
 			if self.sensorAdapterMgr:
 				self.sensorAdapterMgr.updateSimulationData(data = data)
+				isHandled = True
 
 			if self.windTurbineMgr:
 				if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
 					self.windTurbineMgr.updateSimulationData(data = data)
+					isHandled = True
 
-			return self.actuatorAdapterMgr.sendActuatorCommand(data = data)
+			if (isHandled):
+				return data
+			else:
+				return self.actuatorAdapterMgr.sendActuatorCommand(data = data)
 		else:
 			logging.warning("Incoming actuator command is invalid (null). Ignoring.")
 			
@@ -226,7 +239,8 @@ class DeviceDataManager(IDataMessageListener):
 			logging.debug("Incoming actuator response received (from actuator manager): " + str(data))
 			
 			# store the data in the cache
-			self.actuatorResponseCache[data.getName()] = data
+			if (self.actuatorResponseCache):
+				self.actuatorResponseCache[data.getName()] = data
 
 			# store the data in the TSDB (if enabled)
 			if (self.tsdbClient):
@@ -442,7 +456,9 @@ class DeviceDataManager(IDataMessageListener):
 			# left to ActuatorAdapterManager and its associated actuator
 			# task implementations, and not this function
 			self.handleActuatorCommandMessage(ad)
-		else:
+		elif (self.enableEventBasedDisplayUpdates):
+			logging.info('Generating LED display message for actuator command [non-actionable]...')
+
 			ad = ActuatorData( \
 				name = ConfigConst.LED_ACTUATOR_NAME, \
 				typeCategoryID = ConfigConst.SYSTEM_MGMT_TYPE, \
