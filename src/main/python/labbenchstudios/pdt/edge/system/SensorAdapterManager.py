@@ -23,6 +23,7 @@
 #
 
 import logging
+import traceback
 
 from importlib import import_module
 
@@ -57,6 +58,8 @@ class SensorAdapterManager(IDataManager):
 		"""
 		self.configUtil = ConfigUtil()
 		
+		self.pauseScheduler = False
+
 		self.pollRate     = \
 			self.configUtil.getInteger( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
@@ -117,6 +120,10 @@ class SensorAdapterManager(IDataManager):
 		is retrieved, the data listener will be invoked.
 		
 		"""
+		if self.pauseScheduler:
+			logging.info("Scheduler temporarily paused.")
+			return
+		
 		if self.isEnvSensingActive:
 			humidityData = self.humidityAdapter.generateTelemetry()
 			pressureData = self.pressureAdapter.generateTelemetry()
@@ -188,54 +195,83 @@ class SensorAdapterManager(IDataManager):
 		"""
 		"""
 		if data and self.useSimulator:
-			logging.info("Updating simulator data set: " + data.getName())
+			command = data.getCommand()
+			value = data.getValue()
 
-			if data.getTypeID() == ConfigConst.THERMOSTAT_TYPE:
-				simData = \
-					self._generateTrendingSimulationData( \
-						self.tempAdapter.getLatestTelemetry(), data.getValue())
-				
-				self.tempAdapter = None
-				self.tempAdapter = TemperatureSensorSimTask(dataSet = simData)
-				self.tempAdapter.enableSimulatedDataRollover(enable = False)
+			logging.info( \
+				"Updating environmental simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
+				data.getName(), str(data.getTypeID()), str(command), str(value))
 
-			elif data.getTypeID() == ConfigConst.HUMIDIFIER_TYPE:
-				simData = \
-					self._generateTrendingSimulationData( \
-						self.humidityAdapter.getLatestTelemetry(), data.getValue())
-				
-				self.humidityAdapter = None
-				self.humidityAdapter = HumiditySensorSimTask(dataSet = simData)
-				self.humidityAdapter.enableSimulatedDataRollover(enable = False)
+			self.pauseScheduler = True
 
-	def _generateTrendingSimulationData(self, sensorData: SensorData = None, targetVal: float = 0.0):
+			try:
+				if data.getTypeID() == ConfigConst.THERMOSTAT_TYPE:
+					simData = \
+						self._generateTrendingSimulationData( \
+							curVal = self.tempAdapter.getTelemetryValue(), \
+							targetVal = data.getValue(), \
+							increment = 0.1)
+
+					self.tempAdapter = None
+					self.tempAdapter = TemperatureSensorSimTask(dataSet = simData)
+					self.tempAdapter.enableSimulatedDataRollover(enable = False)
+
+				elif data.getTypeID() == ConfigConst.HUMIDIFIER_TYPE:
+					simData = \
+						self._generateTrendingSimulationData( \
+							curVal = self.humidityAdapter.getTelemetryValue(), \
+							targetVal = data.getValue(), \
+							increment = 0.5)
+
+					self.humidityAdapter = None
+					self.humidityAdapter = HumiditySensorSimTask(dataSet = simData)
+					self.humidityAdapter.enableSimulatedDataRollover(enable = False)
+
+			except Exception as e:
+				logging.warning("Failed to reconfigure simulated data sets. Resuming.")
+				traceback.print_exception(type(e), e, e.__traceback__)
+
+			self.pauseScheduler = False
+
+	def _generateTrendingSimulationData(self, curVal: float = 0.0, targetVal: float = 0.0, increment: float = 0.1):
 		"""
 		"""
-		if sensorData:
+		if (not self.dataGenerator):
 			self.dataGenerator = SensorDataGenerator()
 
-			curVal = sensorData.getValue()
-			minVal = curVal
+		minVal = curVal
+		maxVal = curVal
+		trendUp = False
+
+		if (curVal > targetVal):
+			minVal = targetVal
 			maxVal = curVal
-			raiseTemp = False
+			trendUp = False
 
-			if (curVal > targetVal):
-				minVal = targetVal
-				maxVal = curVal
-				raiseTemp = False
+		if (curVal < targetVal):
+			minVal = curVal
+			maxVal = targetVal
+			trendUp = True
 
-			if (curVal < targetVal):
-				minVal = curVal
-				maxVal = targetVal
-				raiseTemp = True
-
-			simData = \
-				self.dataGenerator.generateTrendingSensorDataSet( \
-					trendUpwards = raiseTemp, minValue = minVal, maxValue = maxVal)
+		logging.info( \
+			"\n\n*****\n" +
+			"Updating simulation data set:" + \
+			"\n\tTrend Up:  " + str(trendUp) + \
+			"\n\tIncrement: " + str(increment) + \
+			"\n\tCur Val:   " + str(curVal) + \
+			"\n\tMin Val:   " + str(minVal) + \
+			"\n\tMax Val:   " + str(maxVal) + \
+			"\n*****\n\n")
 			
-			return simData
-		
-		return None
+		simData = \
+			self.dataGenerator.generateTrendingSensorDataSet( \
+				trendUpwards = trendUp, \
+				increment = increment, \
+				minValue = minVal, \
+				maxValue = maxVal, \
+				useIncrementForSampleCount = True)
+			
+		return simData
 	
 	def _initEnvironmentalSensorTasks(self):
 		"""

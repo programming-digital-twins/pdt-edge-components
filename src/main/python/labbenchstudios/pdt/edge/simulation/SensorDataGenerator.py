@@ -216,7 +216,16 @@ class SensorDataGenerator(object):
 		
 		return self.generateDailySensorDataSet(curveType = self.FULL_WAVE, noiseLevel = noiseLevel, minValue = minValue, maxValue = maxValue, startHour = 0, endHour = 24, useSeconds = useSeconds)
 
-	def generateTrendingSensorDataSet(self, trendUpwards: bool = False, minValue: float = DEFAULT_MIN_VALUE, maxValue: float = DEFAULT_MAX_VALUE, startHour: int = 0, endHour: int = 1, samplesPerHour: int = 60):
+	def generateTrendingSensorDataSet( \
+			self, \
+			trendUpwards: bool = False, \
+			minValue: float = DEFAULT_MIN_VALUE, \
+			maxValue: float = DEFAULT_MAX_VALUE, \
+			increment: float = 0.1, \
+			startHour: int = 0, \
+			endHour: int = 1, \
+			samplesPerHour: int = 60,
+			useIncrementForSampleCount: bool = False):
 		"""
 		Generates a time-series data set. This call will use the parameters to generate
 		time-series data that includes the ordered time points and their values stored
@@ -247,9 +256,16 @@ class SensorDataGenerator(object):
 		#             temp it should take less time than moving 10 degrees -
 		#             currently, the algorithim generates the same number
 		#             of samples regardless of the min / max span
-		if samplesPerHour < 1: samplesPerHour = 1
+		totalSamples = 1
 
-		totalSamples = abs(abs(startHour) - abs(endHour)) * samplesPerHour
+		if (useIncrementForSampleCount):
+			totalSamples = int(abs(abs(maxValue) - abs(minValue)) / abs(increment))
+		else:
+			if samplesPerHour < 1:
+				samplesPerHour = 1
+
+			totalSamples = int(abs(abs(startHour) - abs(endHour)) * samplesPerHour)
+			
 		timeEntries = calcLib.linspace(start = startHour, stop = endHour, num = totalSamples)
 		dataValues = calcLib.sin(timeEntries / self.dayDenominator)
 

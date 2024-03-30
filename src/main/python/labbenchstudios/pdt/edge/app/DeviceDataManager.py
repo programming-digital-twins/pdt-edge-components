@@ -87,6 +87,10 @@ class DeviceDataManager(IDataMessageListener):
 			self.configUtil.getBoolean( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.SEND_EVENT_DISPLAY_UPDATES_KEY)
 		
+		self.enableSimulation = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SIMULATOR_KEY)
+		
 		# NOTE: this can also be retrieved from the configuration file
 		self.enableActuation    = True
 		self.tsdbClient         = None
@@ -127,7 +131,7 @@ class DeviceDataManager(IDataMessageListener):
 		if self.enableActuation:
 			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self)
 			logging.info("Local actuation capabilities enabled")
-		
+
 		self.deviceID     = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
@@ -210,14 +214,15 @@ class DeviceDataManager(IDataMessageListener):
 			#   the actuation event
 			isHandled = False
 
-			if self.sensorAdapterMgr:
-				self.sensorAdapterMgr.updateSimulationData(data = data)
-				isHandled = True
-
-			if self.windTurbineMgr:
-				if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
-					self.windTurbineMgr.updateSimulationData(data = data)
+			if self.enableSimulation:
+				if self.sensorAdapterMgr:
+					self.sensorAdapterMgr.updateSimulationData(data = data)
 					isHandled = True
+
+				if self.windTurbineMgr:
+					if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
+						self.windTurbineMgr.updateSimulationData(data = data)
+						isHandled = True
 
 			if (isHandled):
 				return data
