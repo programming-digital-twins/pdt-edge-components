@@ -61,7 +61,10 @@ class TemperatureSensorEmulatorTask(BaseSensorTask):
 		
 		@return The SensorData instance.
 		"""
-		sensorData = SensorData(name = self.getName() , typeID = self.getTypeID())
+		sensorData = \
+			SensorData( \
+				name = self.getName() , typeCategoryID = self.getTypeCategoryID(), typeID = self.getTypeID())
+		
 		sensorVal = self.sh.environ.temperature
 				
 		sensorData.setValue(sensorVal)

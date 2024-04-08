@@ -61,7 +61,10 @@ class HumiditySensorEmulatorTask(BaseSensorTask):
 		
 		@return The SensorData instance.
 		"""
-		sensorData = SensorData(name = self.getName() , typeID = self.getTypeID())
+		sensorData = \
+			SensorData( \
+				name = self.getName() , typeCategoryID = self.getTypeCategoryID(), typeID = self.getTypeID())
+		
 		sensorData.setTypeCategoryID(self.getTypeCategoryID())
 		sensorVal = self.sh.environ.humidity
 				
