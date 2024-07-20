@@ -42,6 +42,7 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		super( \
 			WindTurbineSensorSimTask, self).__init__( \
 				name = ConfigConst.WIND_TURBINE_NAME, \
+				typeName = ConfigConst.WIND_TURBINE_NAME, \
 				typeID = ConfigConst.WIND_SYSTEM_TYPE, \
 				typeCategoryID = ConfigConst.ENERGY_TYPE_CATEGORY, \
 				dataSet = dataSet,

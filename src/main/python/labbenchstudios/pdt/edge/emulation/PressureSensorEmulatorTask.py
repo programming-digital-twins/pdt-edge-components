@@ -44,7 +44,8 @@ class PressureSensorEmulatorTask(BaseSensorTask):
 		"""
 		super( \
 			PressureSensorEmulatorTask, self).__init__( \
-				name = ConfigConst.PRESSURE_SENSOR_NAME, \
+				name = ConfigConst.BAROMETER_NAME, \
+				typeName = ConfigConst.PRESSURE_SENSOR_NAME, \
 				typeID = ConfigConst.PRESSURE_SENSOR_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY)
 		

@@ -32,6 +32,7 @@ from labbenchstudios.pdt.common.IActuatorTask import IActuatorTask
 class BaseActuatorTask(IActuatorTask):
 	def __init__(self, \
 			name: str = ConfigConst.NOT_SET, \
+			typeName: str = ConfigConst.NOT_SET, \
 			typeID: int = ConfigConst.DEFAULT_ACTUATOR_TYPE, \
 			typeCategoryID = ConfigConst.DEFAULT_TYPE_CATEGORY_ID, \
 			simpleName: str = "Actuator"):
@@ -41,6 +42,7 @@ class BaseActuatorTask(IActuatorTask):
 		@param actuatorType The int representing the type of the actuator.
 		"""
 		self.name = name
+		self.typeName = typeName
 		self.typeID = typeID
 		self.typeCategoryID = typeCategoryID
 		self.simpleName = simpleName
@@ -48,7 +50,13 @@ class BaseActuatorTask(IActuatorTask):
 		self.lastKnownValue = ConfigConst.DEFAULT_VAL
 		self.ignoreTypeID = False
 		
-		self.latestActuatorResponse = ActuatorData(typeID = self.typeID, typeCategoryID = self.typeCategoryID, name = self.name)
+		self.latestActuatorResponse = \
+			ActuatorData( \
+				typeID = self.typeID, \
+				typeCategoryID = self.typeCategoryID, \
+				name = self.name)
+		
+		self.latestActuatorResponse.setTypeName(self.typeName)
 		self.latestActuatorResponse.setAsResponse()
 		
 	def getLatestResponse(self) -> ActuatorData:
@@ -73,6 +81,14 @@ class BaseActuatorTask(IActuatorTask):
 		@return str
 		"""
 		return self.name
+	
+	def getTypeName(self) -> str:
+		"""
+		Returns the type name of this simulator.
+		
+		@return str
+		"""
+		return self.typeName
 	
 	def getSimpleName(self) -> str:
 		"""

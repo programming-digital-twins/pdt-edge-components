@@ -33,8 +33,9 @@ class BaseSystemUtilTask(ISensorTask):
 	
 	"""
 	
-	def __init__(self, name = ConfigConst.NOT_SET, typeID = ConfigConst.DEFAULT_SENSOR_TYPE):
+	def __init__(self, name = ConfigConst.NOT_SET, typeName = ConfigConst.NOT_SET, typeID = ConfigConst.DEFAULT_SENSOR_TYPE):
 		self.name = name
+		self.typeName = typeName
 		self.typeID = typeID
 		self.value = ConfigConst.DEFAULT_VAL
 
@@ -53,6 +54,7 @@ class BaseSystemUtilTask(ISensorTask):
 		@return The (possibly updated) latest SensorData instance.
 		"""
 		sensorData = SensorData(typeID = self.typeID, name = self.name)
+		sensorData.setTypeName(self.typeName)
 		sensorData.setValue(self.value)
 		
 		self.latestSensorData = sensorData

@@ -50,6 +50,7 @@ class LedActuatorDisplayEmulatorTask(BaseActuatorTask):
 		super( \
 			LedActuatorDisplayEmulatorTask, self).__init__( \
 				name = ConfigConst.LED_ACTUATOR_NAME, \
+				typeName = ConfigConst.LED_ACTUATOR_NAME, \
 				typeID = ConfigConst.LED_DISPLAY_ACTUATOR_TYPE, \
 				typeCategoryID = ConfigConst.SYSTEM_MGMT_TYPE_CATEGORY, \
 				simpleName = "LED_Display")

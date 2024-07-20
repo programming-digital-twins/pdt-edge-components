@@ -41,6 +41,7 @@ class HumidifierActuatorSimTask(BaseActuatorTask):
 		super( \
 			HumidifierActuatorSimTask, self).__init__( \
 				name = ConfigConst.HUMIDIFIER_ACTUATOR_NAME, \
+				typeName = ConfigConst.HUMIDIFIER_ACTUATOR_NAME, \
 				typeID = ConfigConst.HUMIDIFIER_ACTUATOR_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY, \
 				simpleName = "HUMIDIFIER")

@@ -36,6 +36,7 @@ class BaseSensorTask(ISensorTask):
 	
 	def __init__(self, \
 	    	name = ConfigConst.NOT_SET, \
+			typeName = ConfigConst.NOT_SET, \
 			typeID: int = ConfigConst.DEFAULT_SENSOR_TYPE, \
 			typeCategoryID: int = ConfigConst.DEFAULT_TYPE_CATEGORY_ID, \
 			dataSet = None, \
@@ -49,6 +50,7 @@ class BaseSensorTask(ISensorTask):
 		"""
 		self.dataSet = dataSet
 		self.name = name
+		self.typeName = typeName
 		self.typeID = typeID
 		self.typeCategoryID = typeCategoryID
 		self.dataSetIndex = 0
@@ -79,7 +81,14 @@ class BaseSensorTask(ISensorTask):
 		
 		@return The SensorData instance.
 		"""
-		sensorData = SensorData(typeID = self.typeID, typeCategoryID = self.typeCategoryID, name = self.name)
+		sensorData = \
+			SensorData( \
+				typeID = self.typeID, \
+				typeCategoryID = self.typeCategoryID, \
+				name = self.name)
+
+		sensorData.setTypeName(self.typeName)
+				
 		sensorVal = ConfigConst.DEFAULT_VAL
 		
 		if self.useRandomizer:
@@ -125,6 +134,14 @@ class BaseSensorTask(ISensorTask):
 		@return str
 		"""
 		return self.name
+	
+	def getTypeName(self) -> str:
+		"""
+		Returns the type name of this simulator.
+		
+		@return str
+		"""
+		return self.typeName
 	
 	def getTypeID(self) -> int:
 		"""

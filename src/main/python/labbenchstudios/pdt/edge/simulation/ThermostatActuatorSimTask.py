@@ -44,6 +44,7 @@ class ThermostatActuatorSimTask(BaseActuatorTask):
 		super( \
 			ThermostatActuatorSimTask, self).__init__( \
 				name = ConfigConst.THERMOSTAT_NAME, \
+				typeName = ConfigConst.THERMOSTAT_NAME, \
 				typeID = ConfigConst.THERMOSTAT_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY, \
 				simpleName = ConfigConst.THERMOSTAT_NAME)

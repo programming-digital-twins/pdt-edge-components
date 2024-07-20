@@ -43,7 +43,8 @@ class HvacActuatorSimTask(BaseActuatorTask):
 	def __init__(self):
 		super( \
 			HvacActuatorSimTask, self).__init__( \
-				name = ConfigConst.HVAC_ACTUATOR_NAME, \
+				name = ConfigConst.THERMOSTAT_NAME, \
+				typeName = ConfigConst.HVAC_ACTUATOR_NAME, \
 				typeID = ConfigConst.HVAC_ACTUATOR_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY, \
 				simpleName = "HVAC")

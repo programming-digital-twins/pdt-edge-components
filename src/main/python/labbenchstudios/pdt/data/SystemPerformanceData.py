@@ -35,6 +35,7 @@ class SystemPerformanceData(IotDataContext):
 	def __init__(self, d = None):
 		super(SystemPerformanceData, self).__init__( \
 			name = ConfigConst.SYSTEM_PERF_MSG, \
+			typeName = ConfigConst.SYSTEM_PERF_NAME, \
 			typeID = ConfigConst.SYSTEM_PERF_TYPE, \
 			typeCategoryID = ConfigConst.SYSTEM_PERF_TYPE_CATEGORY,
 			d = d)

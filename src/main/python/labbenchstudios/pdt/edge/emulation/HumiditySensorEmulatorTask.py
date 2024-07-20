@@ -45,6 +45,7 @@ class HumiditySensorEmulatorTask(BaseSensorTask):
 		super( \
 			HumiditySensorEmulatorTask, self).__init__( \
 				name = ConfigConst.HUMIDITY_SENSOR_NAME, \
+				typeName = ConfigConst.HYGROMETER_NAME, \
 				typeID = ConfigConst.HUMIDITY_SENSOR_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY)
 		

@@ -44,7 +44,8 @@ class TemperatureSensorEmulatorTask(BaseSensorTask):
 		"""
 		super( \
 			TemperatureSensorEmulatorTask, self).__init__( \
-				name = ConfigConst.TEMP_SENSOR_NAME, \
+				name = ConfigConst.THERMOSTAT_NAME, \
+				typeName = ConfigConst.TEMP_SENSOR_NAME, \
 				typeID = ConfigConst.TEMP_SENSOR_TYPE, \
 				typeCategoryID = ConfigConst.ENV_TYPE_CATEGORY)
 		
