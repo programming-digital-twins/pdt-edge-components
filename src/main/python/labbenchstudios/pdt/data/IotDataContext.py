@@ -36,6 +36,7 @@ class IotDataContext(BaseIotData):
 	def __init__(self, \
 		typeCategoryID: int = ConfigConst.DEFAULT_TYPE_ID, \
 		typeID: int = ConfigConst.DEFAULT_TYPE_CATEGORY_ID, \
+		typeName: str = ConfigConst.NOT_SET, \
 		name: str = ConfigConst.NOT_SET, \
 		d = None):
 		"""
@@ -51,7 +52,9 @@ class IotDataContext(BaseIotData):
 			except:
 				pass
 			
-		self.typeName = ConfigConst.NOT_SET
+		if typeName:
+			self.typeName = typeName
+			
 		self.typeCategoryID = typeCategoryID
 
 		# always pull device ID from configuration file
