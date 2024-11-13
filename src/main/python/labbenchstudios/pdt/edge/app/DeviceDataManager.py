@@ -23,6 +23,9 @@
 #
 
 import logging
+import threading
+import queue
+
 from time import sleep
 
 from labbenchstudios.pdt.edge.connection.InfluxClientConnector import InfluxClientConnector
@@ -37,6 +40,7 @@ import labbenchstudios.pdt.common.ConfigConst as ConfigConst
 
 from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
+from labbenchstudios.pdt.common.MessageQueueItem import MessageQueueItem
 from labbenchstudios.pdt.common.ResourceNameEnum import ResourceNameEnum
 
 from labbenchstudios.pdt.data.DataUtil import DataUtil
@@ -75,6 +79,10 @@ class DeviceDataManager(IDataMessageListener):
 			self.configUtil.getBoolean( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
 		
+		self.enableMsgQueue   = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MSG_QUEUE_KEY)
+		
 		self.enableMqttClient = \
 			self.configUtil.getBoolean( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
@@ -93,12 +101,16 @@ class DeviceDataManager(IDataMessageListener):
 		
 		# NOTE: this can also be retrieved from the configuration file
 		self.enableActuation    = True
+
 		self.tsdbClient         = None
 		self.mqttClient         = None
-		self.windTurbineMgr        = None
+		self.windTurbineMgr     = None
 		self.sysPerfMgr         = None
 		self.sensorAdapterMgr   = None
 		self.actuatorAdapterMgr = None
+
+		self.msgQueue           = None
+		self.msgQueueThread     = None
 		
 		self.actuatorResponseCache = None
 		self.sensorDataCache = None
@@ -131,6 +143,11 @@ class DeviceDataManager(IDataMessageListener):
 		if self.enableActuation:
 			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self)
 			logging.info("Local actuation capabilities enabled")
+
+		if self.enableMsgQueue:
+			self.msgQueue = queue.SimpleQueue()
+			self.msgQueueThread = threading.Thread(target = self._processQueueMessages, name = "MsgQueueProcessor", daemon = True)
+			logging.info("Message queue and processing thread enabled")
 
 		self.deviceID     = \
 			self.configUtil.getProperty( \
@@ -198,6 +215,19 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The ActuatorData message received.
 		@return bool True on success; False otherwise.
 		"""
+		if self.msgQueue:
+			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleActuatorCommandMessage)
+			self.msgQueue.put(msgQueueItem)
+
+			logging.info("Added ActuatorData command to message queue.")
+
+	def _handleActuatorCommandMessage(self, data: ActuatorData = None) -> ActuatorData:
+		"""
+		Callback function to handle an actuator command message packaged as a ActuatorData object.
+		
+		@param data The ActuatorData message received.
+		@return bool True on success; False otherwise.
+		"""
 		if data:
 			logging.info( \
 				"\n\nvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" \
@@ -215,13 +245,13 @@ class DeviceDataManager(IDataMessageListener):
 			isHandled = False
 
 			if self.enableSimulation:
-				if self.sensorAdapterMgr:
-					self.sensorAdapterMgr.updateSimulationData(data = data)
-					isHandled = True
-
-				if self.windTurbineMgr:
-					if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
+				if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
+					if self.windTurbineMgr:
 						self.windTurbineMgr.updateSimulationData(data = data)
+						isHandled = True
+				else:
+					if self.sensorAdapterMgr:
+						self.sensorAdapterMgr.updateSimulationData(data = data)
 						isHandled = True
 
 			if (isHandled):
@@ -240,9 +270,26 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The ActuatorData message received.
 		@return bool True on success; False otherwise.
 		"""
+		if self.msgQueue:
+			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleActuatorCommandResponse)
+			self.msgQueue.put(msgQueueItem)
+
+			logging.info("Added ActuatorData response to message queue.")
+
+	def _handleActuatorCommandResponse(self, data: ActuatorData = None) -> bool:
+		"""
+		Callback function to handle an actuator command response packaged as a ActuatorData object.
+		
+		@param data The ActuatorData message received.
+		@return bool True on success; False otherwise.
+		"""
 		if data:
-			logging.debug("Incoming actuator response received (from actuator manager): " + str(data))
+			logging.debug("Incoming actuator response received (likely from internal component): " + str(data))
 			
+			if not data.isResponseFlagEnabled():
+				logging.warning("Incoming actuator response not set as response. Updating.")
+				data.setAsResponse()
+
 			# store the data in the cache
 			if (self.actuatorResponseCache):
 				self.actuatorResponseCache[data.getName()] = data
@@ -264,28 +311,20 @@ class DeviceDataManager(IDataMessageListener):
 			
 			return False
 	
-	def handleIncomingMessage(self, resource = None, msg: str = None) -> bool:
+	def handleSensorMessage(self, data: SensorData = None) -> bool:
 		"""
-		Callback function to handle incoming messages on a given topic with
-		a string-based payload.
+		Callback function to handle a sensor message packaged as a SensorData object.
 		
-		@param resourceEnum The topic enum associated with this message.
-		@param msg The message received. It is expected to be in JSON format.
+		@param data The SensorData message received.
 		@return bool True on success; False otherwise.
 		"""
-		if resource and msg:
-			logging.info("Incoming msg received. Topic: %s  Payload: %s", str(resource), msg)
-			
-			# delegate the internal analysis / action of the message
-			self._handleIncomingDataAnalysis(msg)
-			
-			return True
-		else:
-			logging.warning("Incoming msg or resource reference is invalid (null). Ignoring.")
-			
-			return False
+		if self.msgQueue:
+			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleSensorMessage)
+			self.msgQueue.put(msgQueueItem)
 
-	def handleSensorMessage(self, data: SensorData = None) -> bool:
+			logging.info("Added SensorData to message queue.")
+		
+	def _handleSensorMessage(self, data: SensorData = None) -> bool:
 		"""
 		Callback function to handle a sensor message packaged as a SensorData object.
 		
@@ -320,6 +359,20 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The SystemPerformanceData message received.
 		@return bool True on success; False otherwise.
 		"""
+		if self.msgQueue:
+			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleSystemPerformanceMessage)
+			self.msgQueue.put(msgQueueItem)
+
+			logging.info("Added SystemPerformanceData to message queue.")
+
+	def _handleSystemPerformanceMessage(self, data: SystemPerformanceData = None) -> bool:
+		"""
+		Callback function to handle a system performance message packaged as
+		SystemPerformanceData object.
+		
+		@param data The SystemPerformanceData message received.
+		@return bool True on success; False otherwise.
+		"""
 		if data:
 			logging.info("Incoming system performance message received (from sys perf manager): " + str(data))
 			
@@ -336,6 +389,27 @@ class DeviceDataManager(IDataMessageListener):
 		
 			return False
 	
+	def handleIncomingMessage(self, resource = None, msg: str = None) -> bool:
+		"""
+		Callback function to handle incoming messages on a given topic with
+		a string-based payload.
+		
+		@param resourceEnum The topic enum associated with this message.
+		@param msg The message received. It is expected to be in JSON format.
+		@return bool True on success; False otherwise.
+		"""
+		if resource and msg:
+			logging.info("Incoming msg received. Topic: %s  Payload: %s", str(resource), msg)
+			
+			# delegate the internal analysis / action of the message
+			self._handleIncomingDataAnalysis(msg)
+			
+			return True
+		else:
+			logging.warning("Incoming msg or resource reference is invalid (null). Ignoring.")
+			
+			return False
+
 	def startManager(self):
 		"""
 		Starts the manager - this will invoke the start methods on
@@ -344,6 +418,10 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		logging.info("Starting DeviceDataManager...")
 		
+		if self.msgQueueThread:
+			logging.info("Starting message queue processor thread...")
+			self.msgQueueThread.start()
+
 		if self.mqttClient:
 			self.mqttClient.connectClient()
 		
@@ -378,13 +456,20 @@ class DeviceDataManager(IDataMessageListener):
 		if self.sensorAdapterMgr:	
 			self.sensorAdapterMgr.stopManager()
 			
+		# join the message queue thread
+		# AFTER sim's are stopped and
+		# BEFORE connections are stopped
+		if self.msgQueueThread:
+			logging.info("Processing remaining queued message items from message queue thread...")
+			self.msgQueueThread.join()
+			
 		if self.mqttClient:
 			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
 			self.mqttClient.disconnectClient()
 				
 		if self.tsdbClient:
 			self.tsdbClient.disconnectClient()
-			
+		
 		logging.info("Stopped DeviceDataManager.")
 		
 	def _handleIncomingDataAnalysis(self, resource = None, msg: str = None):
@@ -503,3 +588,37 @@ class DeviceDataManager(IDataMessageListener):
 			else:
 				logging.warning("Failed to publish incoming data to resource (MQTT): %s", str(resource))
 			
+	def _processQueueMessages(self):
+		"""
+		A simple queue 'get' and 'task complete' method for use by the queue processing thread.
+		This call will block while the queued item is pulled off and processed by the thread,
+		but should not block other operations until the DeviceDataManager is stopped.
+
+		"""
+		while True:
+			count = 0
+
+			try:
+				while (not self.msgQueue.empty()):
+					msgItem = self.msgQueue.get()
+
+					# msgItem will be of type MessageQueueItem
+					logging.info("Working on queue item: %s", str(msgItem))
+
+					# do work
+					if msgItem and isinstance(msgItem, MessageQueueItem):
+						msgItem.invokeCallback()
+
+					count = count + 1
+
+					# complete the task
+					self.msgQueue.task_done()
+			except:
+				# queue is prob empty
+				logging.warning("Failed to process queue item.")
+
+			# sleep for a wee bit - make this configurable,
+			# since we process a bunch of queue msgs in one
+			# sweep, we should be able to keep this delay
+			# to about 1000 ms (1 second)
+			sleep(1.0)

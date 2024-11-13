@@ -53,6 +53,7 @@ enablePowerGeneration = True
 enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True
+enableMsgQueue   = True
 pollCycleSecs    = 5
 sendEventDisplayUpdates = False
 updateDisplayOnActuation = True

@@ -74,7 +74,7 @@ class WindTurbineSensorSimTask(BaseSensorTask):
 		sensorData = SensorData()
 		sensorData.updateData(self.getLatestTelemetry())
 		sensorData.setTypeName(ConfigConst.ROTATIONAL_SPEED_NAME)
-		sensorData.setTypeID(ConfigConst.WIND_TURBINE_HUB_SPEED_SENSOR_TYPE)
+		sensorData.setTypeID(ConfigConst.WIND_TURBINE_ROTATIONAL_SPEED_SENSOR_TYPE)
 		sensorData.setTypeCategoryID(self.getTypeCategoryID())
 		sensorData.setValue(self.getCalculatedRotorHubRpm())
 

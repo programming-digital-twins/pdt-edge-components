@@ -23,8 +23,11 @@
 #
 
 import logging
+import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
+from threading import Thread
 
 import labbenchstudios.pdt.common.ConfigConst as ConfigConst
 
@@ -32,7 +35,6 @@ from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.common.IDataManager import IDataManager
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
 
-from labbenchstudios.pdt.edge.simulation import WindTurbineSensorSimTask
 from labbenchstudios.pdt.edge.simulation.WindTurbineSensorSimTask import WindTurbineSensorSimTask
 
 from labbenchstudios.pdt.data.ActuatorData import ActuatorData
@@ -67,14 +69,23 @@ class WindTurbineAdapterManager(IDataManager):
 
 		if self.pollRate <= 0:
 			self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
-			
+
+		self.scheduler = None
+		self.schedThread = None
+
 		self.scheduler = BackgroundScheduler()
 		self.scheduler.add_job( \
 			self.handleTelemetry, 'interval', seconds = self.pollRate, \
-			max_instances = 2, coalesce = True, misfire_grace_time = 15)
-		
+			max_instances = 5, coalesce = True, misfire_grace_time = 30)
+
+		'''
+		self.schedThread = Thread(target = self._runTelemetrySchedule, name = "WindTurbineTask")
+		self.schedThread.daemon = True
+		'''
+
 		self.windTurbine = None
 		self.dataMsgListener = None
+		self.curCommand = ConfigConst.DEFAULT_COMMAND
 
 		self._initWindTurbineSensorTasks()
 
@@ -121,8 +132,11 @@ class WindTurbineAdapterManager(IDataManager):
 		"""
 		logging.info("Starting wind turbine manager...")
 		
-		if not self.scheduler.running:
-			self.scheduler.start()
+		if self.schedThread:
+			self.schedThread.start()
+		elif self.scheduler:
+			if not self.scheduler.running:
+				self.scheduler.start()
 		else:
 			logging.warning("WindTurbineAdapterManager scheduler already started. Ignoring.")
 		
@@ -134,8 +148,11 @@ class WindTurbineAdapterManager(IDataManager):
 		logging.info("Stopping wind turbine manager...")
 		
 		try:
-			if self.scheduler.running:
-				self.scheduler.shutdown()
+			if self.schedThread:
+				self.schedThread.join()
+			elif self.scheduler:
+				if self.scheduler.running:
+					self.scheduler.shutdown()
 			else:
 				logging.warning("WindTurbineAdapterManager scheduler already stopped. Ignoring.")
 		except:
@@ -144,21 +161,41 @@ class WindTurbineAdapterManager(IDataManager):
 	def updateSimulationData(self, data: ActuatorData = None):
 		"""
 		"""
-		if (data and self.useSimulator):
-			command = data.getCommand()
-			value = data.getValue()
+		if (self.useSimulator):
+			if (data and data.getLocationID() == self.locationID and not data.isResponseFlagEnabled()):
+				adResponse = ActuatorData()
+				adResponse.updateData(data)
+				adResponse.setAsResponse()
+		
+				command = data.getCommand()
+				value = data.getValue()
 
-			logging.info( \
-				"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
-				data.getName(), str(data.getTypeID()), str(command), str(value))
+				if (command == self.curCommand):
+					logging.warning("Duplicate command received for wind turbine sim: %s. Igoring.", str(command))
+					pass
+				else:
+					self.curCommand = command
 
-			if (command == ConfigConst.COMMAND_OFF):
-				logging.info("  --> ENABLING Wind Turbine Brake...")
-				self.enableWindTurbineBraking = True
+				logging.info( \
+					"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
+					data.getName(), str(data.getTypeID()), str(command), str(value))
 
-			elif (command == ConfigConst.COMMAND_ON):
-				logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
-				self.enableWindTurbineBraking = False
+				if (command == ConfigConst.COMMAND_OFF):
+					logging.info("  --> ENABLING Wind Turbine Brake...")
+					self.enableWindTurbineBraking = True
+
+				elif (command == ConfigConst.COMMAND_ON):
+					logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
+					self.enableWindTurbineBraking = False
+
+				if self.dataMsgListener:
+					self.dataMsgListener.handleActuatorCommandResponse(adResponse)
+
+			else:
+				logging.warning("Received update sim data request with invalid or response ActuatorData. Ignoring.")
+
+		else:
+			logging.warning("Received update sim data request, but sim is disabled. Ignoring.")
 
 	def _initWindTurbineSensorTasks(self):
 		"""
@@ -188,7 +225,7 @@ class WindTurbineAdapterManager(IDataManager):
 		
 	def _initSampleWindTurbine(self):
 		pass
-
+	
 	def _generateOscillatingSimulationData(self, sensorData: SensorData = None, targetVal: float = 0.0):
 		"""
 		"""
@@ -215,3 +252,12 @@ class WindTurbineAdapterManager(IDataManager):
 		
 		return None
 	
+	def _runTelemetrySchedule(self):
+		"""
+		"""
+		while (True):
+			self.handleTelemetry()
+
+			time.sleep(self.pollRate)
+
+		pass

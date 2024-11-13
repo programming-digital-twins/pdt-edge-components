@@ -33,7 +33,8 @@ import labbenchstudios.pdt.common.ConfigConst as ConfigConst
 from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.edge.app.DeviceDataManager import DeviceDataManager
 
-logging.basicConfig(format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s', level = logging.DEBUG)
+LOG_FORMAT = "%(asctime)s:::%(thread)d:%(name)s.%(module)s.%(funcName)s()[%(lineno)s]:%(levelname)s:%(message)s"
+logging.basicConfig(format = LOG_FORMAT, level = logging.DEBUG)
 
 class EdgeDeviceApp():
 	"""
