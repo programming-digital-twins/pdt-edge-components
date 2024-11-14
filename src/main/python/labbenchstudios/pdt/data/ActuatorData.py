@@ -41,11 +41,15 @@ class ActuatorData(IotDataContext):
 		
 		self.value = ConfigConst.DEFAULT_VAL
 		self.command = ConfigConst.DEFAULT_COMMAND
+		self.commandName = ConfigConst.NOT_SET
 		self.stateData = None
 		self.isResponse = False
 		
 	def getCommand(self) -> int:
 		return self.command
+	
+	def getCommandName(self) -> str:
+		return self.commandName
 	
 	def getStateData(self) -> str:
 		return self.stateData
@@ -59,6 +63,11 @@ class ActuatorData(IotDataContext):
 	def setCommand(self, command: int):
 		self.command = command
 		self.updateTimeStamp()
+
+	def setCommandName(self, commandName: str):
+		if (commandName):
+			self.commandName = commandName
+			self.updateTimeStamp()
 	
 	def setAsResponse(self):
 		self.isResponse = True
@@ -76,6 +85,7 @@ class ActuatorData(IotDataContext):
 	def _handleUpdateData(self, data):
 		if data and isinstance(data, ActuatorData):
 			self.command = data.getCommand()
+			self.commandName = data.getCommandName()
 			self.stateData = data.getStateData()
 			self.value = data.getValue()
 			self.isResponse = data.isResponseFlagEnabled()
@@ -86,10 +96,11 @@ class ActuatorData(IotDataContext):
 		
 		@return The string representing this instance.
 		"""
-		s = IotDataContext.__str__(self) + ',{}={},{}={},{}={},{}={}'
+		s = IotDataContext.__str__(self) + ',{}={},{}={},{}={},{}={},{}={}'
 		
 		return s.format(
 			ConfigConst.COMMAND_PROP, self.command,
+			ConfigConst.COMMAND_NAME_PROP, self.commandName,
 			ConfigConst.STATE_DATA_PROP, self.stateData,
 			ConfigConst.VALUE_PROP, self.value,
 			ConfigConst.IS_RESPONSE_PROP, self.isResponse)

@@ -75,3 +75,7 @@ tempSimCeiling     =   25.0
 handleTempChangeOnDevice = True
 triggerHvacTempFloor     = 18.0
 triggerHvacTempCeiling   = 20.0
+
+[Settings.WindTurbine]
+# wind turbine specific properties
+enableCommandName = enableWindTurbine

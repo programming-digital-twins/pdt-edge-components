@@ -55,6 +55,8 @@ class WindTurbineAdapterManager(IDataManager):
 		"""
 		self.configUtil = ConfigUtil()
 		
+		self.windTurbineSection = ConfigConst.SETTINGS_SECTION_NAME + "." + ConfigConst.WIND_TURBINE_NAME
+
 		self.pollRate = \
 			self.configUtil.getInteger( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
@@ -62,6 +64,10 @@ class WindTurbineAdapterManager(IDataManager):
 		self.locationID = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.enableCommandName = \
+			self.configUtil.getProperty( \
+				section = self.windTurbineSection, key = ConfigConst.ENABLE_COMMAND_NAME_KEY, defaultVal = ConfigConst.NOT_SET)
 		
 		# for now, power generation is always a simulation
 		self.useSimulator = True
@@ -163,6 +169,11 @@ class WindTurbineAdapterManager(IDataManager):
 		"""
 		if (self.useSimulator):
 			if (data and data.getLocationID() == self.locationID and not data.isResponseFlagEnabled()):
+				
+				if (data.getCommandName() != self.enableCommandName):
+					logging.warning("Incoming wind turbine command is not supported. Ignoring: %s", data.getCommandName())
+					return
+
 				adResponse = ActuatorData()
 				adResponse.updateData(data)
 				adResponse.setAsResponse()
@@ -172,24 +183,23 @@ class WindTurbineAdapterManager(IDataManager):
 
 				if (command == self.curCommand):
 					logging.warning("Duplicate command received for wind turbine sim: %s. Igoring.", str(command))
-					pass
 				else:
 					self.curCommand = command
 
-				logging.info( \
-					"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
-					data.getName(), str(data.getTypeID()), str(command), str(value))
+					logging.info( \
+						"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
+						data.getName(), str(data.getTypeID()), str(command), str(value))
 
-				if (command == ConfigConst.COMMAND_OFF):
-					logging.info("  --> ENABLING Wind Turbine Brake...")
-					self.enableWindTurbineBraking = True
+					if (command == ConfigConst.COMMAND_OFF):
+						logging.info("  --> ENABLING Wind Turbine Brake...")
+						self.enableWindTurbineBraking = True
 
-				elif (command == ConfigConst.COMMAND_ON):
-					logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
-					self.enableWindTurbineBraking = False
+					elif (command == ConfigConst.COMMAND_ON):
+						logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
+						self.enableWindTurbineBraking = False
 
-				if self.dataMsgListener:
-					self.dataMsgListener.handleActuatorCommandResponse(adResponse)
+					#if self.dataMsgListener:
+					#	self.dataMsgListener.handleActuatorCommandResponse(adResponse)
 
 			else:
 				logging.warning("Received update sim data request with invalid or response ActuatorData. Ignoring.")

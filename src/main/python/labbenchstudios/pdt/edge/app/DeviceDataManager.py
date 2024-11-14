@@ -24,6 +24,7 @@
 
 import logging
 import threading
+import traceback
 import queue
 
 from time import sleep
@@ -610,12 +611,11 @@ class DeviceDataManager(IDataMessageListener):
 						msgItem.invokeCallback()
 
 					count = count + 1
-
-					# complete the task
-					self.msgQueue.task_done()
-			except:
+					
+			except Exception as e:
 				# queue is prob empty
 				logging.warning("Failed to process queue item.")
+				traceback.print_exception(type(e), e, e.__traceback__)
 
 			# sleep for a wee bit - make this configurable,
 			# since we process a bunch of queue msgs in one

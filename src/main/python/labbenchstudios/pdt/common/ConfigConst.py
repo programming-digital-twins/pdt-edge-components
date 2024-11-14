@@ -107,6 +107,7 @@ LONGITUDE_PROP   = 'longitude'
 ELEVATION_PROP   = 'elevation'
 
 COMMAND_PROP     = 'command'
+COMMAND_NAME_PROP = 'commandName'
 STATE_DATA_PROP  = 'stateData'
 IS_RESPONSE_PROP = 'isResponse'
 
@@ -173,6 +174,8 @@ LED_ACTUATOR_NAME        = 'Lighting'
 HUMIDIFIER_ACTUATOR_NAME = 'Humidifier'
 HVAC_ACTUATOR_NAME       = 'HVAC'
 #HVAC_ACTUATOR_NAME       = 'Thermostat'
+
+SETTINGS_SECTION_NAME = 'Settings'
 
 HUMIDITY_SENSOR_NAME = 'Humidifier'
 PRESSURE_SENSOR_NAME = 'BarometricPressure'
@@ -395,6 +398,7 @@ ENABLE_COAP_SERVER_KEY = 'enableCoapServer'
 ENABLE_POWER_GENERATION_KEY = 'enablePowerGeneration'
 ENABLE_SYSTEM_PERF_KEY = 'enableSystemPerformance'
 ENABLE_SENSING_KEY     = 'enableSensing'
+ENABLE_COMMAND_NAME_KEY = 'enableCommandName'
 
 SEND_EVENT_DISPLAY_UPDATES_KEY = 'sendEventDisplayUpdates'
 UPDATE_DISPLAY_ON_ACTUATION_KEY = 'updateDisplayOnActuation'
