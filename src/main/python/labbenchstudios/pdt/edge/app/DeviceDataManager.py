@@ -23,12 +23,8 @@
 #
 
 import logging
-import threading
-import traceback
-import queue
 
-from time import sleep
-
+from labbenchstudios.pdt.edge.app.EventDispatchManager import EventDispatchManager
 from labbenchstudios.pdt.edge.connection.InfluxClientConnector import InfluxClientConnector
 from labbenchstudios.pdt.edge.connection.MqttClientConnector import MqttClientConnector
 
@@ -41,7 +37,6 @@ import labbenchstudios.pdt.common.ConfigConst as ConfigConst
 
 from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
-from labbenchstudios.pdt.common.MessageQueueItem import MessageQueueItem
 from labbenchstudios.pdt.common.ResourceNameEnum import ResourceNameEnum
 
 from labbenchstudios.pdt.data.DataUtil import DataUtil
@@ -59,6 +54,11 @@ class DeviceDataManager(IDataMessageListener):
 	via one of the implemented callbacks, it can be packaged appropriately and sent
 	on to one of the communication mechanisms implemented in the connection client.
 	
+	NOTE: This is NOT a thread-safe class by design; however, the EventDispatchManager
+	is designed to sequentially process incoming and outgoing messages via a sync'd queue
+	on a separate thread. All incoming and outgoing messages should be handled via
+	the EventDispatchManager to ensure DeviceDataManager calls on the main thread
+	are not blocked.
 	"""
 	
 	def __init__(self):
@@ -79,10 +79,6 @@ class DeviceDataManager(IDataMessageListener):
 		self.enableSensing      = \
 			self.configUtil.getBoolean( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
-		
-		self.enableMsgQueue   = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MSG_QUEUE_KEY)
 		
 		self.enableMqttClient = \
 			self.configUtil.getBoolean( \
@@ -110,45 +106,9 @@ class DeviceDataManager(IDataMessageListener):
 		self.sensorAdapterMgr   = None
 		self.actuatorAdapterMgr = None
 
-		self.msgQueue           = None
-		self.msgQueueThread     = None
-		
 		self.actuatorResponseCache = None
 		self.sensorDataCache = None
 		self.sysPerfDataCache = None
-
-		if self.enableTsdbClient:
-			self.tsdbClient = InfluxClientConnector()
-			logging.info("TSDB connector enabled")
-
-		if self.enableMqttClient:
-			self.mqttClient = MqttClientConnector()
-			self.mqttClient.setDataMessageListener(self)
-			logging.info("MQTT connector enabled")
-			
-		if self.enablePowerGeneration:
-			self.windTurbineMgr = WindTurbineAdapterManager()
-			self.windTurbineMgr.setDataMessageListener(self)
-			logging.info("Local wind turbine management enabled")
-		
-		if self.enableSystemPerf:
-			self.sysPerfMgr = SystemPerformanceManager()
-			self.sysPerfMgr.setDataMessageListener(self)
-			logging.info("Local system performance tracking enabled")
-		
-		if self.enableSensing:
-			self.sensorAdapterMgr = SensorAdapterManager()
-			self.sensorAdapterMgr.setDataMessageListener(self)
-			logging.info("Local sensor tracking enabled")
-			
-		if self.enableActuation:
-			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self)
-			logging.info("Local actuation capabilities enabled")
-
-		if self.enableMsgQueue:
-			self.msgQueue = queue.SimpleQueue()
-			self.msgQueueThread = threading.Thread(target = self._processQueueMessages, name = "MsgQueueProcessor", daemon = True)
-			logging.info("Message queue and processing thread enabled")
 
 		self.deviceID     = \
 			self.configUtil.getProperty( \
@@ -169,6 +129,8 @@ class DeviceDataManager(IDataMessageListener):
 		self.triggerHvacTempCeiling   = \
 			self.configUtil.getFloat( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
+		
+		self._initManager()
 	
 	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
 		"""
@@ -210,19 +172,6 @@ class DeviceDataManager(IDataMessageListener):
 		return None
 	
 	def handleActuatorCommandMessage(self, data: ActuatorData = None) -> ActuatorData:
-		"""
-		Callback function to handle an actuator command message packaged as a ActuatorData object.
-		
-		@param data The ActuatorData message received.
-		@return bool True on success; False otherwise.
-		"""
-		if self.msgQueue:
-			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleActuatorCommandMessage)
-			self.msgQueue.put(msgQueueItem)
-
-			logging.info("Added ActuatorData command to message queue.")
-
-	def _handleActuatorCommandMessage(self, data: ActuatorData = None) -> ActuatorData:
 		"""
 		Callback function to handle an actuator command message packaged as a ActuatorData object.
 		
@@ -271,19 +220,6 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The ActuatorData message received.
 		@return bool True on success; False otherwise.
 		"""
-		if self.msgQueue:
-			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleActuatorCommandResponse)
-			self.msgQueue.put(msgQueueItem)
-
-			logging.info("Added ActuatorData response to message queue.")
-
-	def _handleActuatorCommandResponse(self, data: ActuatorData = None) -> bool:
-		"""
-		Callback function to handle an actuator command response packaged as a ActuatorData object.
-		
-		@param data The ActuatorData message received.
-		@return bool True on success; False otherwise.
-		"""
 		if data:
 			logging.debug("Incoming actuator response received (likely from internal component): " + str(data))
 			
@@ -304,7 +240,7 @@ class DeviceDataManager(IDataMessageListener):
 			resourceName = ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE
 			
 			# delegate to the transmit function any potential upstream comm's
-			self._handleUpstreamTransmission(resource = resourceName, msg = actuatorMsg)
+			self._processUpstreamTransmission(resource = resourceName, msg = actuatorMsg)
 			
 			return True
 		else:
@@ -319,20 +255,6 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The SensorData message received.
 		@return bool True on success; False otherwise.
 		"""
-		if self.msgQueue:
-			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleSensorMessage)
-			self.msgQueue.put(msgQueueItem)
-
-			logging.info("Added SensorData to message queue.")
-		
-	def _handleSensorMessage(self, data: SensorData = None) -> bool:
-		"""
-		Callback function to handle a sensor message packaged as a SensorData object.
-		
-		@param data The SensorData message received.
-		@return bool True on success; False otherwise.
-		"""
-		
 		if data:
 			logging.info("Incoming sensor data received (from sensor manager): " + str(data))
 			
@@ -341,10 +263,10 @@ class DeviceDataManager(IDataMessageListener):
 				self.tsdbClient.storeSensorData(data = data)
 			
 			# handle any local data analysis (this may trigger an actuation event)
-			self._handleSensorDataAnalysis(data)
+			self._processSensorDataAnalysis(data)
 			
 			jsonData = DataUtil().sensorDataToJson(data = data)
-			self._handleUpstreamTransmission(resource = ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, msg = jsonData)
+			self._processUpstreamTransmission(resource = ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, msg = jsonData)
 			
 			return True
 		else:
@@ -360,20 +282,6 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The SystemPerformanceData message received.
 		@return bool True on success; False otherwise.
 		"""
-		if self.msgQueue:
-			msgQueueItem = MessageQueueItem(msgData = data, callbackFunc = self._handleSystemPerformanceMessage)
-			self.msgQueue.put(msgQueueItem)
-
-			logging.info("Added SystemPerformanceData to message queue.")
-
-	def _handleSystemPerformanceMessage(self, data: SystemPerformanceData = None) -> bool:
-		"""
-		Callback function to handle a system performance message packaged as
-		SystemPerformanceData object.
-		
-		@param data The SystemPerformanceData message received.
-		@return bool True on success; False otherwise.
-		"""
 		if data:
 			logging.info("Incoming system performance message received (from sys perf manager): " + str(data))
 			
@@ -382,7 +290,7 @@ class DeviceDataManager(IDataMessageListener):
 				self.tsdbClient.storeSystemPerformanceData(data = data)
 			
 			jsonData = DataUtil().systemPerformanceDataToJson(data = data)
-			self._handleUpstreamTransmission(resource = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, msg = jsonData)
+			self._processUpstreamTransmission(resource = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, msg = jsonData)
 			
 			return True
 		else:
@@ -403,7 +311,7 @@ class DeviceDataManager(IDataMessageListener):
 			logging.info("Incoming msg received. Topic: %s  Payload: %s", str(resource), msg)
 			
 			# delegate the internal analysis / action of the message
-			self._handleIncomingDataAnalysis(msg)
+			self._processIncomingDataAnalysis(msg)
 			
 			return True
 		else:
@@ -419,9 +327,11 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		logging.info("Starting DeviceDataManager...")
 		
-		if self.msgQueueThread:
-			logging.info("Starting message queue processor thread...")
-			self.msgQueueThread.start()
+		# Event Dispatch Manager start / stop sequence
+		# START: BEFORE any other manager
+		if self.eventDispatchMgr:
+			logging.info("Starting event dispatch manager...")
+			self.eventDispatchMgr.startManager()
 
 		if self.mqttClient:
 			self.mqttClient.connectClient()
@@ -457,12 +367,12 @@ class DeviceDataManager(IDataMessageListener):
 		if self.sensorAdapterMgr:	
 			self.sensorAdapterMgr.stopManager()
 			
-		# join the message queue thread
-		# AFTER sim's are stopped and
-		# BEFORE connections are stopped
-		if self.msgQueueThread:
-			logging.info("Processing remaining queued message items from message queue thread...")
-			self.msgQueueThread.join()
+		# Event Dispatch Manager start / stop sequence
+		# STOP: AFTER sim's are stopped (to ingress any remaining sim data items)
+		# STOP: BEFORE connections are stopped (to egress any remaining sim data items)
+		if self.eventDispatchMgr:
+			logging.info("Stopping event dispatch manager...")
+			self.eventDispatchMgr.stopManager()
 			
 		if self.mqttClient:
 			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
@@ -473,7 +383,45 @@ class DeviceDataManager(IDataMessageListener):
 		
 		logging.info("Stopped DeviceDataManager.")
 		
-	def _handleIncomingDataAnalysis(self, resource = None, msg: str = None):
+	def _initManager(self):
+		"""
+		Simple method for initializing DeviceDataManager's internally managed managers,
+		along with the EventDispatchManager, which will handle all incoming and outgoing
+		messages in a thread-safe and orderly fashion.
+		
+		"""
+		# initialize the event dispatch manager
+		self.eventDispatchMgr = EventDispatchManager(dataMsgListener = self)
+
+		if self.enableTsdbClient:
+			self.tsdbClient = InfluxClientConnector(dataMsgListener = self.eventDispatchMgr)
+			logging.info("TSDB connector enabled")
+
+		if self.enableMqttClient:
+			self.mqttClient = MqttClientConnector()
+			self.mqttClient.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("MQTT connector enabled")
+			
+		if self.enablePowerGeneration:
+			self.windTurbineMgr = WindTurbineAdapterManager()
+			self.windTurbineMgr.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("Local wind turbine management enabled")
+		
+		if self.enableSystemPerf:
+			self.sysPerfMgr = SystemPerformanceManager()
+			self.sysPerfMgr.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("Local system performance tracking enabled")
+		
+		if self.enableSensing:
+			self.sensorAdapterMgr = SensorAdapterManager()
+			self.sensorAdapterMgr.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("Local sensor tracking enabled")
+			
+		if self.enableActuation:
+			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self.eventDispatchMgr)
+			logging.info("Local actuation capabilities enabled")
+
+	def _processIncomingDataAnalysis(self, resource = None, msg: str = None):
 		"""
 		Check the incoming msg data against known JSON schema's and see
 		if there's a way to convert it to an internal object - such as
@@ -501,7 +449,7 @@ class DeviceDataManager(IDataMessageListener):
 		except:
 			logging.warning("Failed to convert message to ActuatorData: ", msg)
 		
-	def _handleSensorDataAnalysis(self, data: SensorData = None):
+	def _processSensorDataAnalysis(self, data: SensorData = None):
 		"""
 		Check if the data requires any internal action (such as
 		enabling / disabling an actuator), and execute that action.
@@ -564,7 +512,7 @@ class DeviceDataManager(IDataMessageListener):
 			
 			self.handleActuatorCommandMessage(ad)
 	
-	def _handleUpstreamTransmission(self, resource = None, msg: str = None):
+	def _processUpstreamTransmission(self, resource = None, msg: str = None):
 		"""
 		Checks if we have a valid MQTT and / or CoAP client connection, and if so,
 		transmit the msg data to the resource given using one or both protocols.
@@ -589,36 +537,3 @@ class DeviceDataManager(IDataMessageListener):
 			else:
 				logging.warning("Failed to publish incoming data to resource (MQTT): %s", str(resource))
 			
-	def _processQueueMessages(self):
-		"""
-		A simple queue 'get' and 'task complete' method for use by the queue processing thread.
-		This call will block while the queued item is pulled off and processed by the thread,
-		but should not block other operations until the DeviceDataManager is stopped.
-
-		"""
-		while True:
-			count = 0
-
-			try:
-				while (not self.msgQueue.empty()):
-					msgItem = self.msgQueue.get()
-
-					# msgItem will be of type MessageQueueItem
-					logging.info("Working on queue item: %s", str(msgItem))
-
-					# do work
-					if msgItem and isinstance(msgItem, MessageQueueItem):
-						msgItem.invokeCallback()
-
-					count = count + 1
-					
-			except Exception as e:
-				# queue is prob empty
-				logging.warning("Failed to process queue item.")
-				traceback.print_exception(type(e), e, e.__traceback__)
-
-			# sleep for a wee bit - make this configurable,
-			# since we process a bunch of queue msgs in one
-			# sweep, we should be able to keep this delay
-			# to about 1000 ms (1 second)
-			sleep(1.0)

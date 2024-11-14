@@ -54,7 +54,8 @@ class InfluxClientConnector(IPersistenceClient):
 
 	def __init__(self, \
 		serverHost: str = None, serverPort: int = None, \
-		clientToken: str = None, orgID: str = None):
+		clientToken: str = None, orgID: str = None, \
+		dataMsgListener: IDataMessageListener = None):
 		"""
 		Default constructor. This will set remote TSDB server information and client
 		connection information based on the default configuration file contents.
@@ -80,6 +81,7 @@ class InfluxClientConnector(IPersistenceClient):
 		
 		self.clientToken = None
 		self.orgID = None
+		self.dataMsgListener = dataMsgListener
 
 		authDict = self.config.getCredentials(ConfigConst.DATA_GATEWAY_SERVICE)
 
