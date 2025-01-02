@@ -81,4 +81,5 @@ If any code samples or other technology this work contains, describes, and / or 
 
 # LICENSE
 See [LICENSE-DATA](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-DATA) if you plan to use the non-code resources (sample data files, etc.)
+
 See [LICENSE-CODE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-CODE) if you plan to use this code (e.g., Python code, etc.)
