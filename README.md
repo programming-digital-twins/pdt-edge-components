@@ -135,6 +135,6 @@ If any code samples or other technology this work contains, describes, and / or 
 
 # LICENSE
 
-See [LICENSE-DATA](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-DATA.md) if you plan to use the non-code resources (i.e., sample JSON data files and JSON configuration file).
+- Docs and configuration files: See [LICENSE-DATA](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-DATA.md) if you plan to use the non-code resources (i.e., sample JSON data files and JSON configuration file).
 
-See [LICENSE-CODE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-CODE.md) if you plan to use this code (i.e., Python code).
+- Source code files (Python): See [LICENSE-CODE](https://github.com/programming-digital-twins/pdt-edge-components/blob/alpha/LICENSE-CODE.md) if you plan to use this code (i.e., Python code).
