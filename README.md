@@ -1,19 +1,18 @@
 # Programming Digital Twins - Edge Components
 
+## Overview
+
 This is the source repository for edge-based software components (written primarily in Python [3]) related to my Digital Twins Programming course at Northeastern University. The intent of this repository is to provide students with a baseline edge application / compute capability that can serve as the data generator and hardware 'emulation' functionality for the digital twin components (which are housed in a separate repository). For convenience to the reader, much of the basic functionality has already been implemented (such as configuration logic, consts, interfaces, and test cases).
 
-These classes and their relationships respresent a notional design that aligns with the requirements listed in [Programming Digital Twins Requirements](https://github.com/orgs/programming-digital-twins/projects/1). These requirements encapsulate the programming exercises presented in my course [Buliding Digital Twins](TBD).
+These classes and their relationships respresent a notional design that aligns with the requirements listed in [Programming Digital Twins Requirements](https://github.com/orgs/programming-digital-twins/projects/1). These requirements encapsulate the programming exercises presented in my Northeastern University course Building Digital Twins.
 
-## Links, Exercises, Updates, Errata, and Clarifications
-
-Please see the following links to access exercises for this project. Please note that many of the exercises and sample source code in this repository is based on the Constrained Device Application design and exercises from my book, [Programming the Internet of Things Book](https://learning.oreilly.com/library/view/programming-the-internet/9781492081401/).
- - [Programming Digital Twins Requirements](https://github.com/orgs/programming-digital-twins/projects/1)
- - [Original Constrained Device Application Source Code Template](https://github.com/programming-the-iot/python-components)
- - [Programming the Internet of Things Book](https://learning.oreilly.com/library/view/programming-the-internet/9781492081401/)
-
-## How to use this repository
+## Usage
 
 ### Installation
+
+NOTE: See the instructions listed in [PDT-EDA-01-001](https://github.com/programming-digital-twins/pdt-exercise-tasks/issues/23) for details.
+
+#### In Summary
 
 - From the command line using git and pip (NOTE: path names are examples only - yours will likely differ)
   - Clone the repository: Use `git clone` with this repository's git URL.
@@ -22,7 +21,7 @@ Please see the following links to access exercises for this project. Please note
     - E.g., `export PYTHONPATH=/mnt/d/pdt/pdt-edge-components/src/main/python:/mnt/d/pdt/pdt-edge-components/src/test/python`
   - Install the dependencies: Use `pip install -r requirements.txt` to install the relevant dependencies.
 
-### Usage
+### Running the EDA from the Command Line
 
 - From the command line using Python (NOTE: path names are examples only - yours will likley differ)
   - Update the config: If necessary, edit the `PdtConfig.props` config file in the ./config path and set the `enableMqttClient = True` entry to False: `enableMqttClient = False`. This can be changed later once your MQTT broker is running and reachable from the app.
@@ -56,15 +55,15 @@ Please see the following links to access exercises for this project. Please note
 
 Note: Check back regularly for version updates, as this repository is under active development and is in 'alpha' mode (e.g., UNRELEASED).
 
-### About the app and its design
+## Organization
 
 If you're reading [Programming the Internet of Things: An Introduction to Building Integrated, Device to Cloud IoT Solutions](https://learning.oreilly.com/library/view/programming-the-internet/9781492081401), you'll see a partial tie-in with the exercises described in each chapter and this repository.
 
-## This repository aligns to exercises in Programming Digital Twins, and partially to Programming the Internet of Things
+Please NOTE: This repository aligns to exercises in Programming Digital Twins, and partially to Programming the Internet of Things
 
 These components are all written in Python 3, and are largely based on, although different from, the exercises designed for the Constrained Device Application (CDA) specified in my book [Programming the Internet of Things: An Introduction to Building Integrated, Device to Cloud IoT Solutions](https://learning.oreilly.com/library/view/programming-the-internet/9781492081401).
 
-## How to navigate the directory structure for this repository
+### Repository Navigation
 
 This repository is comprised of the following top level paths:
 - [config](https://github.com/programming-digital-twins/pdt-edge-components/tree/alpha/config): Contains basic configuration file(s).
@@ -87,21 +86,20 @@ Lastly, here are some 'dot' ('.{filename}') files pertaining to dev environment 
 
 NOTE: The directory structure and all files are subject to change based on feedback I receive from readers of my book and students in my IoT class, as well as improvements I find to be helpful for overall repo betterment.
 
-# Other things to know
+## Other things to know
 
-## Pull requests
+### Pull requests
 
 PR's are disabled while the codebase is being developed.
 
-## Updates
+### Updates
 
-Much of this repository, and in particular unit and integration tests, will continue to evolve, so please check back regularly for potential updates. Please note that API changes can - and likely will - occur at any time.
+Much of this repository, and in particular unit and integration tests, will continue to evolve, so please check back regularly for potential updates.
+Please note that API changes can - and likely will - occur at any time.
 
 # REFERENCES
 
 This repository has external dependencies on other open source projects. I'm grateful to the open source community and authors / maintainers of the following libraries:
-
-Core exercises:
 
 - [apscheduler](https://github.com/agronholm/apscheduler)
   - Reference: A. Grönholm. APScheduler. (2020) [Online]. Available: https://pypi.org/project/APScheduler/.
@@ -122,10 +120,6 @@ Core exercises:
   - Reference: InfluxData. Influx DB Python Client. (2023) [Online]. Available: https://github.com/influxdata/influxdb-client-python.
 
 NOTE: This list will be updated as others are incorporated.
-
-# FAQ
-
-For typical questions (and answers) to the repositories of the Programming the IoT project, please see the [FAQ](https://github.com/programming-the-iot/book-exercise-tasks/blob/default/FAQ.md).
 
 # IMPORTANT NOTES
 
