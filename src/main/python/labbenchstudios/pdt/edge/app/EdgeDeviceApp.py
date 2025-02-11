@@ -25,6 +25,7 @@
 import argparse
 import logging
 import os
+import traceback
 
 from time import sleep
 
@@ -123,14 +124,16 @@ def main():
 		# start EDA
 		eda.startApp()
 
-		# check if we should run forever
+		# check if EDA should run forever
 		runForever = configUtil.getBoolean(ConfigConst.EDGE_DEVICE, ConfigConst.RUN_FOREVER_KEY)
 
 		if runForever:
+			# sleep ~5 seconds every loop
 			while (True):
 				sleep(5)
 			
 		else:
+			# run EDA for ~65 seconds then exit
 			if (eda.isAppStarted()):
 				sleep(65)
 				eda.stopApp(0)
@@ -141,8 +144,11 @@ def main():
 		if (eda):
 			eda.stopApp(-1)
 
-	except:
+	except Exception as e:
+		# handle any uncaught exception that may be thrown
+		# during EDA initialization
 		logging.error('Startup exception caused EDA to fail. Exiting.')
+		traceback.print_exception(type(e), e, e.__traceback__)
 
 		if (eda):
 			eda.stopApp(-2)

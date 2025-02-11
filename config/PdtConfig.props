@@ -44,38 +44,47 @@ sysDataBucket     = pdt-sys-data
 [EdgeDevice]
 deviceID = edgedevice001
 deviceLocationID = edgedevice001
-enableSimulator  = True
-enableEmulator   = False
-enableSenseHAT   = False
 enableMqttClient = True
 enableTsdbClient = False
-enablePowerGeneration = True
-enableSystemPerformance = True
-enableSensing    = True
 enableLogging    = True
 enableMsgQueue   = True
 pollCycleSecs    = 5
 sendEventDisplayUpdates = False
 updateDisplayOnActuation = True
+useDataGenerationSettings = True
+dataGenerationSettingsSectionList = Environmental,WindTurbine,RoboticManipulator
+
+# old - use the Settings props instead
+enablePowerGeneration = True
+enableSystemPerformance = True
+enableSimulator  = True
+enableEmulator   = False
+enableSenseHAT   = False
+enableSensing    = True
 
 # NOTE: Use the fully qualified path
 testCdaDataPath  = /tmp/cda-data
 testEmptyApp     = False
 runForever       = True
 
-# configurable limits for sensor simulation
+# environmental sim specific properties
+[Settings.Environmental]
+# only one of the three should be True
+enableSimulator = True
+enableEmulator = False
+enableSenseHAT = False
+
 humiditySimFloor   =   35.0
 humiditySimCeiling =   45.0
 pressureSimFloor   =  990.0
 pressureSimCeiling = 1010.0
 tempSimFloor       =   15.0
 tempSimCeiling     =   25.0
-
-# configurable limits for actuator triggers
 handleTempChangeOnDevice = True
 triggerHvacTempFloor     = 18.0
 triggerHvacTempCeiling   = 20.0
 
-[Settings.WindTurbine]
 # wind turbine specific properties
+[Settings.WindTurbine]
+enablePowerGenerationSim = True
 enableCommandName = enableWindTurbine
