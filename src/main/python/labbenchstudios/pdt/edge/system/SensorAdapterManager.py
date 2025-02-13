@@ -60,20 +60,32 @@ class SensorAdapterManager(IDataManager):
 		
 		self.pauseScheduler = False
 
-		self.pollRate     = \
-			self.configUtil.getInteger( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
-			
-		self.useEmulator  = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_EMULATOR_KEY)
-			
+		self.deviceID = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
 		self.locationID   = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+			
+		self.pollRate     = \
+			self.configUtil.getInteger( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
 			
 		if self.pollRate <= 0:
 			self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
+			
+		self.useEnvDataEmulator  = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.ENABLE_EMULATOR_KEY)
+			
+		self.useSimulator = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.ENABLE_SIMULATOR_KEY)
+			
+		self.useSenseHat = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.ENABLE_SENSE_HAT_KEY)
 			
 		# technically we only need 1 instance - important to set coalesce
 		# to True and allow for misfire grace period
@@ -82,21 +94,6 @@ class SensorAdapterManager(IDataManager):
 			self.handleTelemetry, 'interval', seconds = self.pollRate, max_instances = 2, coalesce = True, misfire_grace_time = 15)
 		
 		self.dataMsgListener = None
-		
-		#
-		# NOTE: New config property added into baseline
-		#
-		self.useSimulator = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SIMULATOR_KEY)
-			
-		self.useSenseHat = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SENSE_HAT_KEY)
-			
-		self.deviceID = \
-			self.configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		
 		#
 		# FUTURE: use with labmodule04 only IFF connected to RPi
@@ -324,7 +321,7 @@ class SensorAdapterManager(IDataManager):
 			
 			self.isEnvSensingActive = True
 			
-		elif self.useEmulator or self.useSenseHat:
+		elif self.useEnvDataEmulator or self.useSenseHat:
 			# load the environmental emulators - the module will use the configuration settings
 			# to determine if the emulator or actual SenseHAT device should be used - in
 			# either case, the API is the same

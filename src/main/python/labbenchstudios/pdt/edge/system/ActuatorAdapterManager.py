@@ -65,12 +65,12 @@ class ActuatorAdapterManager(IDataManager):
 		
 		self.configUtil = ConfigUtil()
 		
-		self.useSimulator = \
+		self.useEnvDataSimulator = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_SIMULATOR_KEY)
-		self.useEmulator  = \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.ENABLE_SIMULATOR_KEY)
+		self.useEnvDataEmulator  = \
 			self.configUtil.getBoolean( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.ENABLE_EMULATOR_KEY)
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.ENABLE_EMULATOR_KEY)
 		self.deviceID     = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
@@ -234,7 +234,7 @@ class ActuatorAdapterManager(IDataManager):
 		
 		"""
 		
-		if self.useSimulator:
+		if self.useEnvDataSimulator:
 			# load the environmental tasks for simulated actuation
 			self.humidifierActuator = HumidifierActuatorSimTask()
 			
@@ -249,7 +249,7 @@ class ActuatorAdapterManager(IDataManager):
 			
 			self.isEnvSensingActive = True
 			
-		elif self.useEmulator:
+		elif self.useEnvDataEmulator:
 			# load the environmental tasks for emulated actuation -
 			# the module will use the configuration settings to determine
 			# if the emulator or actual SenseHAT device should be used - in

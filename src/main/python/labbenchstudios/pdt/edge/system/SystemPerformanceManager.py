@@ -51,13 +51,13 @@ class SystemPerformanceManager(IDataManager):
 		"""
 		configUtil = ConfigUtil()
 		
-		self.pollRate = \
-			configUtil.getInteger( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
-		
 		self.locationID = \
 			configUtil.getProperty( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.pollRate = \
+			configUtil.getInteger( \
+				section = ConfigConst.SYSTEM_PERF_SETTINGS_KEY, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
 		
 		if self.pollRate <= 0:
 			self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES

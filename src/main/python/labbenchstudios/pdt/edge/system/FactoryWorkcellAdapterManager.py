@@ -35,7 +35,7 @@ from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.common.IDataManager import IDataManager
 from labbenchstudios.pdt.common.IDataMessageListener import IDataMessageListener
 
-from labbenchstudios.pdt.edge.simulation.WindTurbineSensorSimTask import WindTurbineSensorSimTask
+from labbenchstudios.pdt.edge.simulation.FactoryWorkcellSimTask import FactoryWorkcellSimTask
 
 from labbenchstudios.pdt.data.ActuatorData import ActuatorData
 from labbenchstudios.pdt.data.SensorData import SensorData

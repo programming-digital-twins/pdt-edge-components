@@ -75,7 +75,7 @@ class ConfigUtilTest(unittest.TestCase):
 		self.assertEqual(port, ConfigConst.DEFAULT_MQTT_PORT)
 	
 	def testGetFloatProperty(self):
-		hSimFloor = self.configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HUMIDITY_SIM_FLOOR_KEY)
+		hSimFloor = self.configUtil.getFloat(ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, ConfigConst.HUMIDITY_SIM_FLOOR_KEY)
 		self.assertGreater(hSimFloor, 0.0)
 	
 	def testGetProperty(self):
@@ -83,7 +83,7 @@ class ConfigUtilTest(unittest.TestCase):
 		self.assertTrue(hostName)
 	
 	def testHasProperty(self):
-		self.assertTrue(self.configUtil.hasProperty(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.ENABLE_EMULATOR_KEY))
+		self.assertTrue(self.configUtil.hasProperty(ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, ConfigConst.ENABLE_EMULATOR_KEY))
 
 	def testHasSection(self):
 		self.assertTrue(self.configUtil.hasSection(ConfigConst.CONSTRAINED_DEVICE))

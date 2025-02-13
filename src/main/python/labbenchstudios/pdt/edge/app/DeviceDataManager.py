@@ -68,68 +68,21 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		self.configUtil = ConfigUtil()
 		
-		self.enablePowerGeneration   = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_POWER_GENERATION_KEY)
-			
-		self.enableSystemPerf   = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SYSTEM_PERF_KEY)
-			
-		self.enableSensing      = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
-		
-		self.enableMqttClient = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
-		
-		self.enableTsdbClient = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_TSDB_CLIENT_KEY)
-		
-		self.enableEventBasedDisplayUpdates = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.SEND_EVENT_DISPLAY_UPDATES_KEY)
-		
-		self.enableSimulation = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SIMULATOR_KEY)
-		
-		# NOTE: this can also be retrieved from the configuration file
-		self.enableActuation    = True
-
 		self.tsdbClient         = None
 		self.mqttClient         = None
-		self.windTurbineMgr     = None
 		self.sysPerfMgr         = None
 		self.sensorAdapterMgr   = None
 		self.actuatorAdapterMgr = None
+
+		self.windTurbineMgr        = None
+		self.roboticManipulatorMgr = None
 
 		self.actuatorResponseCache = None
 		self.sensorDataCache = None
 		self.sysPerfDataCache = None
 
-		self.deviceID     = \
-			self.configUtil.getProperty( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
-		
-		self.locationID   = \
-			self.configUtil.getProperty( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
-		
-		self.handleTempChangeOnDevice = \
-			self.configUtil.getBoolean( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
-			
-		self.triggerHvacTempFloor     = \
-			self.configUtil.getFloat( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
-				
-		self.triggerHvacTempCeiling   = \
-			self.configUtil.getFloat( \
-				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
-		
+		# init config settings first, then init all the manager components
+		self._initConfigurationSettings()
 		self._initManager()
 	
 	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
@@ -194,7 +147,7 @@ class DeviceDataManager(IDataMessageListener):
 			#   the actuation event
 			isHandled = False
 
-			if self.enableSimulation:
+			if self.enableSimEngineUpdates:
 				if (data.getTypeCategoryID() == ConfigConst.ENERGY_TYPE_CATEGORY):
 					if self.windTurbineMgr:
 						self.windTurbineMgr.updateSimulationData(data = data)
@@ -383,6 +336,67 @@ class DeviceDataManager(IDataMessageListener):
 		
 		logging.info("Stopped DeviceDataManager.")
 		
+	def _initConfigurationSettings(self):
+		"""
+		Checks the configuration file to initialize class-scoped var's and properties.
+		This will determine which - if any - managers are initialized.
+		"""
+		self.deviceID     = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.locationID   = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.handleTempChangeOnDevice = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.HANDLE_TEMP_CHANGE_ON_DEVICE_KEY)
+			
+		self.triggerHvacTempFloor     = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
+				
+		self.triggerHvacTempCeiling   = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.ENVIRONMENTAL_SETTINGS_KEY, key = ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
+		
+		self.enableEnvActuationEvents    = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_ACTUATION_KEY)
+		
+		self.enableEnvSensingEvents      = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SENSING_KEY)
+		
+		self.enableMqttClient = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_MQTT_CLIENT_KEY)
+		
+		self.enableTsdbClient = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_TSDB_CLIENT_KEY)
+		
+		self.enableEventBasedDisplayUpdates = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.SEND_EVENT_DISPLAY_UPDATES_KEY)
+		
+		self.enableSimEngineUpdates = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.ENABLE_SIM_ENGINE_UPDATES)
+		
+		self.enableSystemPerfEvents   = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.SYSTEM_PERF_SETTINGS_KEY, key = ConfigConst.ENABLE_OPERATION_KEY)
+			
+		self.enableWindTurbineSim   = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.WIND_TURBINE_SETTINGS_KEY, key = ConfigConst.ENABLE_OPERATION_KEY)
+			
+		self.enableFactoryWorkCellSim   = \
+			self.configUtil.getBoolean( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.ENABLE_OPERATION_KEY)
+			
 	def _initManager(self):
 		"""
 		Simple method for initializing DeviceDataManager's internally managed managers,
@@ -402,25 +416,30 @@ class DeviceDataManager(IDataMessageListener):
 			self.mqttClient.setDataMessageListener(self.eventDispatchMgr)
 			logging.info("MQTT connector enabled")
 			
-		if self.enablePowerGeneration:
-			self.windTurbineMgr = WindTurbineAdapterManager()
-			self.windTurbineMgr.setDataMessageListener(self.eventDispatchMgr)
-			logging.info("Local wind turbine management enabled")
-		
-		if self.enableSystemPerf:
+		if self.enableSystemPerfEvents:
 			self.sysPerfMgr = SystemPerformanceManager()
 			self.sysPerfMgr.setDataMessageListener(self.eventDispatchMgr)
 			logging.info("Local system performance tracking enabled")
 		
-		if self.enableSensing:
+		if self.enableEnvSensingEvents:
 			self.sensorAdapterMgr = SensorAdapterManager()
 			self.sensorAdapterMgr.setDataMessageListener(self.eventDispatchMgr)
 			logging.info("Local sensor tracking enabled")
 			
-		if self.enableActuation:
+		if self.enableEnvActuationEvents:
 			self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener = self.eventDispatchMgr)
 			logging.info("Local actuation capabilities enabled")
 
+		if self.enableWindTurbineSim:
+			self.windTurbineMgr = WindTurbineAdapterManager()
+			self.windTurbineMgr.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("Local wind turbine management enabled")
+		
+		if self.enableFactoryWorkCellSim:
+			#self.factoryWorkcellMgr = FactoryWorkcellManager()
+			#self.factoryWorkcellMgr.setDataMessageListener(self.eventDispatchMgr)
+			logging.info("TEST LOG MSG ONLY: Factory workcell sim enabled")
+		
 	def _processIncomingDataAnalysis(self, resource = None, msg: str = None):
 		"""
 		Check the incoming msg data against known JSON schema's and see
@@ -495,6 +514,7 @@ class DeviceDataManager(IDataMessageListener):
 			# left to ActuatorAdapterManager and its associated actuator
 			# task implementations, and not this function
 			self.handleActuatorCommandMessage(ad)
+
 		elif (self.enableEventBasedDisplayUpdates):
 			logging.info('Generating LED display message for actuator command [non-actionable]...')
 

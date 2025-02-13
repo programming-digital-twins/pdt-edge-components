@@ -48,27 +48,32 @@ enableMqttClient = True
 enableTsdbClient = False
 enableLogging    = True
 enableMsgQueue   = True
-pollCycleSecs    = 5
+enableSystemPerformance = True
+enableActuation = True
+enableSensing = True
+enableSimEngineUpdates = True
 sendEventDisplayUpdates = False
 updateDisplayOnActuation = True
 useDataGenerationSettings = True
-dataGenerationSettingsSectionList = Environmental,WindTurbine,RoboticManipulator
+runForever = True
 
-# old - use the Settings props instead
-enablePowerGeneration = True
-enableSystemPerformance = True
-enableSimulator  = True
-enableEmulator   = False
-enableSenseHAT   = False
-enableSensing    = True
-
+# test specific properties
+[Settings.Testing]
 # NOTE: Use the fully qualified path
 testCdaDataPath  = /tmp/cda-data
+testGdaDataPath  = /tmp/gda-data
 testEmptyApp     = False
-runForever       = True
+
+# system performance specific properties
+[Settings.SystemPerformance]
+enableOperation = True
+pollCycleSecs = 5
 
 # environmental sim specific properties
 [Settings.Environmental]
+enableOperation = True
+pollCycleSecs = 5
+
 # only one of the three should be True
 enableSimulator = True
 enableEmulator = False
@@ -86,5 +91,28 @@ triggerHvacTempCeiling   = 20.0
 
 # wind turbine specific properties
 [Settings.WindTurbine]
+pollCycleSecs = 5
+enableOperation = True
 enablePowerGenerationSim = True
 enableCommandName = enableWindTurbine
+
+# factory workcell specific properties
+[Settings.FactoryWorkcell]
+pollCycleSecs = 5
+enableOperation = True
+
+name = TestWorkcellA
+typeCategoryID = 12000
+enableRoboticManipulator = True
+enableHopper = True
+enableConveyor = True
+enablePalletLoading = True
+
+hopperTypeID = 12001
+hopperTypeName = hopper 
+conveyorTypeID = 12002
+conveyorTypeName = conveyor
+roboticManipulatorTypeID = 12003
+roboticManipulatorName = roboticManipulator
+palletLoaderTypeID = 12004
+palletLoaderName = palletLoader

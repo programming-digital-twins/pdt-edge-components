@@ -325,8 +325,6 @@ CDA_SYSTEM_PERF_MSG_RESOURCE          = PRODUCT_NAME + '/' + CONSTRAINED_DEVICE 
 
 CONFIG_FILE = 'PdtConfig.props'
 CRED_FILE = 'PdtCred.props'
-#DEFAULT_CONFIG_FILE_NAME = '/mnt/d/pdt/pdt-edge-components/config/' + CONFIG_FILE
-#DEFAULT_CRED_FILE_NAME   = '/mnt/d/pdt/pdt-edge-components/cred/' + CRED_FILE
 DEFAULT_CONFIG_FILE_NAME = './config/' + CONFIG_FILE
 DEFAULT_CRED_FILE_NAME = './cred/' + CRED_FILE
 
@@ -340,9 +338,6 @@ COAP    = 'Coap'
 OPCUA   = 'Opcua'
 SMTP    = 'Smtp'
 
-DEVICE_ID_KEY          = 'deviceID'
-DEVICE_LOCATION_ID_KEY = 'deviceLocationID'
-
 CLOUD_GATEWAY_SERVICE = CLOUD   + '.' + GATEWAY_SERVICE
 COAP_GATEWAY_SERVICE  = COAP    + '.' + GATEWAY_SERVICE
 DATA_GATEWAY_SERVICE  = DATA    + '.' + GATEWAY_SERVICE
@@ -350,7 +345,17 @@ MQTT_GATEWAY_SERVICE  = MQTT    + '.' + GATEWAY_SERVICE
 OPCUA_GATEWAY_SERVICE = OPCUA   + '.' + GATEWAY_SERVICE
 SMTP_GATEWAY_SERVICE  = SMTP    + '.' + GATEWAY_SERVICE
 
-CRED_SECTION = "Credentials"
+SETTINGS_KEY = 'Settings'
+TESTING_SETTINGS_KEY          = SETTINGS_KEY + '.' + 'Testing'
+SYSTEM_PERF_SETTINGS_KEY      = SETTINGS_KEY + '.' + 'SystemPerformance'
+ENVIRONMENTAL_SETTINGS_KEY    = SETTINGS_KEY + '.' + 'Environmental'
+WIND_TURBINE_SETTINGS_KEY     = SETTINGS_KEY + '.' + 'WindTurbine'
+FACTORY_WORKCELL_SETTINGS_KEY = SETTINGS_KEY + '.' + 'FactoryWorkcell'
+
+DEVICE_ID_KEY          = 'deviceID'
+DEVICE_LOCATION_ID_KEY = 'deviceLocationID'
+
+CRED_SECTION = 'Credentials'
 
 FROM_ADDRESS_KEY     = 'fromAddr'
 TO_ADDRESS_KEY       = 'toAddr'
@@ -385,6 +390,9 @@ ENABLE_EMULATOR_KEY  = 'enableEmulator'
 ENABLE_SENSE_HAT_KEY = 'enableSenseHAT'
 ENABLE_LOGGING_KEY   = 'enableLogging'
 ENABLE_MSG_QUEUE_KEY = 'enableMsgQueue'
+ENABLE_OPERATION_KEY = 'enableOperation'
+ENABLE_DATA_GENERATION_KEY = 'enableDataGeneration'
+ENABLE_SIM_ENGINE_UPDATES = 'enableSimEngineUpdates'
 USE_WEB_ACCESS_KEY   = 'useWebAccess'
 POLL_CYCLES_KEY      = 'pollCycleSecs'
 KEEP_ALIVE_KEY       = 'keepAlive'
@@ -395,9 +403,15 @@ ENABLE_MQTT_CLIENT_KEY = 'enableMqttClient'
 ENABLE_COAP_CLIENT_KEY = 'enableCoapClient'
 ENABLE_COAP_SERVER_KEY = 'enableCoapServer'
 
+ENABLE_ROBOTIC_MANIPULATOR_KEY = 'enableRoboticManipulator'
+ENABLE_CONVEYOR_KEY = 'enableConveyor'
+ENABLE_HOPPER_KEY = 'enableHopper'
+ENABLE_PALLET_LOADING_KEY = 'enablePalletLoading'
+
 ENABLE_POWER_GENERATION_KEY = 'enablePowerGeneration'
-ENABLE_SYSTEM_PERF_KEY = 'enableSystemPerformance'
-ENABLE_SENSING_KEY     = 'enableSensing'
+ENABLE_SYSTEM_PERF_KEY  = 'enableSystemPerformance'
+ENABLE_ACTUATION_KEY    = 'enableActuation'
+ENABLE_SENSING_KEY      = 'enableSensing'
 ENABLE_COMMAND_NAME_KEY = 'enableCommandName'
 
 SEND_EVENT_DISPLAY_UPDATES_KEY = 'sendEventDisplayUpdates'
