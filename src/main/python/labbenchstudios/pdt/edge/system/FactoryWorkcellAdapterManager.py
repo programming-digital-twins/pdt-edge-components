@@ -42,7 +42,7 @@ from labbenchstudios.pdt.data.SensorData import SensorData
 
 from labbenchstudios.pdt.edge.simulation.SensorDataGenerator import SensorDataGenerator
 
-class WindTurbineAdapterManager(IDataManager):
+class FactoryWorkcellAdapterManager(IDataManager):
 	"""
 	
 	"""
@@ -54,25 +54,45 @@ class WindTurbineAdapterManager(IDataManager):
 		Loads the poll rate and other config properties.
 		"""
 		self.configUtil = ConfigUtil()
+		self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
 		
 		self.locationID = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 		
-		self.pollRate = \
-			self.configUtil.getInteger( \
-				section = ConfigConst.WIND_TURBINE_SETTINGS_KEY, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
-		
 		self.enableCommandName = \
 			self.configUtil.getProperty( \
-				section = ConfigConst.WIND_TURBINE_SETTINGS_KEY, key = ConfigConst.ENABLE_COMMAND_NAME_KEY, defaultVal = ConfigConst.NOT_SET)
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.ENABLE_COMMAND_NAME_KEY, defaultVal = ConfigConst.NOT_SET)
 		
-		# for now, power generation is always a simulation
-		self.useSimulator = True
-		self.enableWindTurbineBraking = False
+		self.minItemProdRate   = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.MIN_PRODUCTION_RATE_KEY, defaultVal = 1.0)
 
-		if self.pollRate <= 0:
-			self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
+		self.maxItemProdRate   = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.MAX_PRODUCTION_RATE_KEY, defaultVal = 60.0)
+		
+		self.defaultItemProdRate = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.DEFAULT_PRODUCTION_RATE_KEY, defaultVal = 30.0)
+
+		self.lkgItemProdRate = self.defaultItemProdRate
+		self.itemProdRateSeconds = 60.0
+
+		self._initItemProductionRateSeconds()
+
+		logging.info("\nSetting min / max item production rate (per minute): " + str(self.minItemProdRate) + " to " + str(self.maxItemProdRate) + "\n")
+		logging.info("\nSetting default item production rate (per minute): " + str(self.defaultItemProdRate) + "\n")
+
+		# for now, factory workcell production is always a simulation
+		self.useSimulator = True
+
+		# set to True whenever production rate <= 0
+		self.pauseProduction = False
+
+		# poll rate is the non-zero item production rate in seconds
+		if self.itemProdRateSeconds > 0:
+			self.pollRate = self.itemProdRateSeconds
 
 		self.scheduler = None
 		self.schedThread = None
@@ -91,26 +111,26 @@ class WindTurbineAdapterManager(IDataManager):
 		self.dataMsgListener = None
 		self.curCommand = ConfigConst.DEFAULT_COMMAND
 
-		self._initWindTurbineSensorTasks()
+		self._initTasks()
 
 	def handleTelemetry(self):
 		"""
 		"""
-		self.windTurbineSimTask.enableBrakingSystem(enable = self.enableWindTurbineBraking)
-		self.windTurbineSimTask.generateTelemetry()
+		self.workcellSimTask.setProductionPauseFlag(enable = self.pauseProduction)
+		self.workcellSimTask.generateTelemetry()
 
-		brakingStatus = "disabled"
+		productionStatus = "running"
 
-		if (self.enableWindTurbineBraking):
-			brakingStatus = "enabled"
+		if (self.pauseProduction):
+			productionStatus = "paused"
 
-		powerOutputData     = self.windTurbineSimTask.getPowerOutputTelemetry()
-		rotationalSpeedData = self.windTurbineSimTask.getRotationalSpeedTelemetry()
-		windSpeedData       = self.windTurbineSimTask.getWindSpeedTelemetry()
+		powerOutputData     = self.workcellSimTask.getPowerOutputTelemetry()
+		rotationalSpeedData = self.workcellSimTask.getRotationalSpeedTelemetry()
+		windSpeedData       = self.workcellSimTask.getWindSpeedTelemetry()
 		
 		logging.debug( \
 			'Brake is %s: Power output is %s kw, rotational speed is %s rpm, wind speed is %s m/s.', \
-			brakingStatus, \
+			productionStatus, \
 			str(powerOutputData.getValue()), \
 			str(rotationalSpeedData.getValue()), \
 			str(windSpeedData.getValue()))
@@ -128,13 +148,25 @@ class WindTurbineAdapterManager(IDataManager):
 		if listener:
 			self.dataMsgListener = listener
 	
+	def setProductionRate(self, curProdRate: int = 0):
+		"""
+		"""
+		if curProdRate == 0:
+			# pause all production
+			self.curItemProdRate = 0
+			self._initItemProductionRateSeconds()
+		elif curProdRate >= self.minItemProdRate and curProdRate <= self.maxItemProdRate:
+			# update production rate
+			self.curItemProdRate = curProdRate
+			self._initItemProductionRateSeconds()
+
 	def startManager(self):
 		"""
-		Starts the wind turbine manager, and starts the scheduled
-		polling of wind turbine tasks.
+		Starts the workcell manager, and starts the scheduled
+		polling of workcell tasks.
 		
 		"""
-		logging.info("Starting wind turbine manager...")
+		logging.info("Starting workcell manager...")
 		
 		if self.schedThread:
 			self.schedThread.start()
@@ -146,10 +178,10 @@ class WindTurbineAdapterManager(IDataManager):
 		
 	def stopManager(self):
 		"""
-		Stops the wind turbine manager, and stops the scheduler.
+		Stops the workcell manager, and stops the scheduler.
 		
 		"""
-		logging.info("Stopping wind turbine manager...")
+		logging.info("Stopping workcell manager...")
 		
 		try:
 			if self.schedThread:
@@ -169,7 +201,7 @@ class WindTurbineAdapterManager(IDataManager):
 			if (data and data.getLocationID() == self.locationID and not data.isResponseFlagEnabled()):
 				
 				if (data.getCommandName() != self.enableCommandName):
-					logging.warning("Incoming wind turbine command is not supported. Ignoring: %s", data.getCommandName())
+					logging.warning("Incoming workcell command is not supported. Ignoring: %s", data.getCommandName())
 					return
 
 				adResponse = ActuatorData()
@@ -180,21 +212,25 @@ class WindTurbineAdapterManager(IDataManager):
 				value = data.getValue()
 
 				if (command == self.curCommand):
-					logging.warning("Duplicate command received for wind turbine sim: %s. Igoring.", str(command))
+					logging.warning("Duplicate command received for workcell sim: %s. Igoring.", str(command))
 				else:
 					self.curCommand = command
 
 					logging.info( \
-						"Updating wind turbine simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
+						"Updating workcell simulated data set: name = %s, type = %s, cmd = %s, val = %s", \
 						data.getName(), str(data.getTypeID()), str(command), str(value))
 
 					if (command == ConfigConst.COMMAND_OFF):
-						logging.info("  --> ENABLING Wind Turbine Brake...")
-						self.enableWindTurbineBraking = True
+						logging.info("  --> DISABLING workcell production...")
+						self.setProductionRate(0)
 
 					elif (command == ConfigConst.COMMAND_ON):
-						logging.info("  --> DISABLING Wind Turbine Brake and updating simulated wind speed...")
-						self.enableWindTurbineBraking = False
+						logging.info("  --> ENABLING workcell production...")
+						self.pauseProduction = False
+
+					elif (command == ConfigConst.COMMAND_UPDATE):
+						logging.info("  --> UPDATING workcell production rate...")
+						self._updateProductionRate(value)
 
 					#if self.dataMsgListener:
 					#	self.dataMsgListener.handleActuatorCommandResponse(adResponse)
@@ -205,61 +241,28 @@ class WindTurbineAdapterManager(IDataManager):
 		else:
 			logging.warning("Received update sim data request, but sim is disabled. Ignoring.")
 
-	def _initWindTurbineSensorTasks(self):
+	def _initItemProductionRateSeconds(self):
 		"""
-		Instantiates the wind turbine sensor tasks based on the configuration file
+		"""
+		if self.defaultItemProdRate > 0.0:
+			self.itemProdRateSeconds = 60.0 / self.defaultItemProdRate
+			self.pauseProduction = False
+			logging.info("\nItem production rate (in seconds): " + str(self.itemProdRateSeconds) + "\n")
+		else:
+			self.itemProdRateSeconds = 0.0
+			self.pauseProduction = True
+			logging.info("\nItem production is currently DISABLED: Prod Rate = " + str(self.defaultItemProdRate) + "\n")
+
+	def _initTasks(self):
+		"""
+		Instantiates the workcell sensor tasks based on the configuration file
 		settings (e.g., simulation only).
 		
 		"""
-		minWindSpeed   = \
-			self.configUtil.getFloat( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.MIN_WIND_SPEED_KEY, defaultVal = 2.0)
-		maxWindSpeed   = \
-			self.configUtil.getFloat( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.MAX_WIND_SPEED_KEY, defaultVal = 20.0)
-		
-		logging.info("\n\n*****\n\nSetting min / max wind speed: " + str(minWindSpeed) + " to " + str(maxWindSpeed) + "\n\n*****\n\n")
-
 		self.dataGenerator = SensorDataGenerator()
 		
-		windSpeedData = \
-			self.dataGenerator.generateOscillatingSensorDataSet( \
-				minValue = minWindSpeed, maxValue = maxWindSpeed, useSeconds = False)
-		
-		self.windTurbineSimTask = WindTurbineSensorSimTask(dataSet = windSpeedData)
+		self.workcellSimTask = FactoryWorkcellSimTask()
 			
-	def _initSampleWeatherData(self):
-		pass
-		
-	def _initSampleWindTurbine(self):
-		pass
-	
-	def _generateOscillatingSimulationData(self, sensorData: SensorData = None, targetVal: float = 0.0):
-		"""
-		"""
-		if sensorData:
-			self.dataGenerator = SensorDataGenerator()
-
-			curVal = sensorData.getValue()
-			minVal = curVal
-			maxVal = curVal
-
-			if (curVal > targetVal):
-				minVal = targetVal
-				maxVal = curVal
-
-			if (curVal < targetVal):
-				minVal = curVal
-				maxVal = targetVal
-
-			simData = \
-				self.dataGenerator.generateOscillatingSensorDataSet( \
-					minValue = minVal, maxValue = maxVal)
-			
-			return simData
-		
-		return None
-	
 	def _runTelemetrySchedule(self):
 		"""
 		"""
@@ -267,5 +270,3 @@ class WindTurbineAdapterManager(IDataManager):
 			self.handleTelemetry()
 
 			time.sleep(self.pollRate)
-
-		pass

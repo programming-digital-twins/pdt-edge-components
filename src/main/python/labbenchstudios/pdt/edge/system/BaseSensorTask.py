@@ -69,7 +69,7 @@ class BaseSensorTask(ISensorTask):
 		"""
 		self.enableDataRoll = enable
 		
-	def generateTelemetry(self) -> SensorData:
+	def generateTelemetry(self, typeID: int = None, typeName: str = None, minVal: float = None, maxVal: float = None) -> SensorData:
 		"""
 		Creates a SensorData instance with the current simulator value
 		and associated timestamp. If self.useRandomizer is enabled, a random
@@ -81,18 +81,30 @@ class BaseSensorTask(ISensorTask):
 		
 		@return The SensorData instance.
 		"""
+		if not typeID:
+			typeID = self.typeID
+
+		if not typeName:
+			typeName = self.typeName
+
 		sensorData = \
 			SensorData( \
-				typeID = self.typeID, \
+				typeID = typeID, \
 				typeCategoryID = self.typeCategoryID, \
 				name = self.name)
 
-		sensorData.setTypeName(self.typeName)
+		sensorData.setTypeName(typeName)
 				
 		sensorVal = ConfigConst.DEFAULT_VAL
 		
 		if self.useRandomizer:
-			sensorVal = random.uniform(self.minVal, self.maxVal)
+			if not minVal:
+				minVal = self.minVal
+
+			if not maxVal:
+				maxVal = self.maxVal
+
+			sensorVal = self.generateRandomValue(minVal = minVal, maxVal = maxVal)
 		else:
 			sensorVal = self.dataSet.getDataEntry(index = self.dataSetIndex)
 			self.dataSetIndex = self.dataSetIndex + 1
@@ -109,6 +121,11 @@ class BaseSensorTask(ISensorTask):
 		
 		return self.latestSensorData
 	
+	def generateRandomValue(minVal: float = 0.0, maxVal: float = 0.0) -> float:
+		"""
+		"""
+		return random.uniform(minVal, maxVal)
+
 	def getLatestTelemetry(self) -> SensorData:
 		"""
 		Returns a newly created SensorData instance as a copy

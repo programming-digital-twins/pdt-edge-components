@@ -23,11 +23,10 @@
 #
 
 import logging
-import math
-import random
 
 import labbenchstudios.pdt.common.ConfigConst as ConfigConst
 
+from labbenchstudios.pdt.common.ConfigUtil import ConfigUtil
 from labbenchstudios.pdt.edge.system.BaseSensorTask import BaseSensorTask
 from labbenchstudios.pdt.data.SensorData import SensorData
 
@@ -38,219 +37,126 @@ class FactoryWorkcellSimTask(BaseSensorTask):
 	
 	"""
 
-	def __init__(self, dataSet = None):
+	def __init__(self, \
+		configSection: str = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, \
+		name: str = "FactoryWorkcell", \
+		typeName: str = "boxProduction", \
+		typeID = ConfigConst.FACTORY_WORKCELL_GENERIC_TYPE):
 		super( \
 			FactoryWorkcellSimTask, self).__init__( \
-				name = ConfigConst.WIND_TURBINE_NAME, \
-				typeName = ConfigConst.WIND_TURBINE_NAME, \
-				typeID = ConfigConst.WIND_SYSTEM_TYPE, \
-				typeCategoryID = ConfigConst.ENERGY_TYPE_CATEGORY, \
-				dataSet = dataSet,
-				minVal = 5.0,
-				maxVal = 9.0)
+				name = name, \
+				typeName = typeName, \
+				typeID = typeID, \
+				typeCategoryID = ConfigConst.FACTORY_WORKCELL_TYPE_CATEGORY)
 		
 		self._initDefaultValues()
 
-	def enableBrakingSystem(self, enable: bool = False):
+	def getPowerDrawTelemetrySensorData(self) -> SensorData:
 		"""
 		"""
-		self.enableBraking = enable
-
-	def getPowerOutputTelemetry(self) -> SensorData:
-		"""
-		"""
-		sensorData = SensorData()
-		sensorData.updateData(self.getLatestTelemetry())
-		sensorData.setTypeName(ConfigConst.POWER_OUTPUT_NAME)
-		sensorData.setTypeID(ConfigConst.WIND_TURBINE_POWER_OUTPUT_SENSOR_TYPE)
-		sensorData.setTypeCategoryID(self.getTypeCategoryID())
-		sensorData.setValue(self.getPowerOutput())
+		# generate random float between 2.0 and 3.0 (KW)
+		sensorData = \
+			self.generateTelemetry( \
+				typeID = ConfigConst.FACTORY_WORKCELL_POWER_DRAW_TYPE, \
+				typeName = ConfigConst.POWER_DRAW_NAME, \
+				minVal = 2.0, \
+				maxVal = 3.0)
 		
 		return sensorData
 
-	def getRotationalSpeedTelemetry(self) -> SensorData:
+	def getAmbientTemperatureTelemetrySensorData(self) -> SensorData:
 		"""
 		"""
-		sensorData = SensorData()
-		sensorData.updateData(self.getLatestTelemetry())
-		sensorData.setTypeName(ConfigConst.ROTATIONAL_SPEED_NAME)
-		sensorData.setTypeID(ConfigConst.WIND_TURBINE_ROTATIONAL_SPEED_SENSOR_TYPE)
-		sensorData.setTypeCategoryID(self.getTypeCategoryID())
-		sensorData.setValue(self.getCalculatedRotorHubRpm())
+		# generate random float between 18.0 and 22.0 (C)
+		sensorData = \
+			self.generateTelemetry( \
+				typeID = ConfigConst.FACTORY_WORKCELL_AMBIENT_TEMP_TYPE, \
+				typeName = ConfigConst.AMBIENT_TEMPERATURE_NAME, \
+				minVal = 18.0, \
+				maxVal = 22.0)
 
 		return sensorData
 	
-	def getWindSpeedTelemetry(self) -> SensorData:
+	def getCurrentItemsProducedSensorData(self) -> SensorData:
 		"""
 		"""
-		sensorData = SensorData()
-		sensorData.updateData(self.getLatestTelemetry())
-		sensorData.setTypeName(ConfigConst.WIND_SPEED_NAME)
-		sensorData.setTypeID(ConfigConst.WIND_TURBINE_AIR_SPEED_SENSOR_TYPE)
-		sensorData.setTypeCategoryID(self.getTypeCategoryID())
-		sensorData.setValue(self.getWindSpeed())
-		
+		sensorData = \
+			self.generateTelemetry( \
+				typeID = ConfigConst.FACTORY_WORKCELL_ITEMS_PRODUCED_TYPE, \
+				typeName = ConfigConst.ITEMS_PRODUCED_NAME, \
+				minVal = float(self.minItemProdRate), \
+				maxVal = float(self.maxItemProdRate))
+
+		# the value from generateTelemetry will be randomly calculated
+		# as a float betweein minVal and maxVal - override it to set
+		# the actual items produced value instead
+		sensorData.setValue(self.itemProductionCounter)
+
 		return sensorData
+	
+	def getCurrentItemsProducedAsValue(self) -> int:
+		"""
+		"""
+		return self.itemProductionCounter
+	
+	def getDefaultItemsProducedPerMinute(self) -> float:
+		"""
+		"""
+		return self.defaultItemProdRate
+	
+	def getMinItemsProducedPerMinute(self) -> float:
+		"""
+		"""
+		return self.minItemProdRate
+	
+	def getMaxItemsProducedPerMinute(self) -> float:
+		"""
+		"""
+		return self.maxItemProdRate
+	
+	def isProductionPaused(self):
+		"""
+		"""
+		return self.pauseProduction
+	
+	def setProductionPauseFlag(self, enable: bool = False):
+		"""
+		"""
+		self.pauseProduction = enable
 
-	def getAirDensity(self) -> float:
+	def _generateSensorReading(self, sensorVal: float = ConfigConst.DEFAULT_VAL) -> float:
 		"""
+		This call simply increments the itemProductionCounter if production is NOT paused.
+		If production is paused, no action is taken.
 		"""
-		return self.airDensity
-	
-	def getMaxPowerCoefficient(self) -> float:
-		"""
-		"""
-		return self.maxPowerCoeff
-	
-	def getOptimalTSR(self) -> float:
-		"""
-		"""
-		return self.optimalTSR
-	
-	def getPowerOutput(self) -> float:
-		"""
-		"""
-		if (self.enableBraking):
-			return 0.0
-		else:
-			return self.powerOutput
-	
-	def getRotorDiameter(self) -> float:
-		"""
-		"""
-		return self.rotorDiameter
-	
-	def getRotorSweptArea(self) -> float:
-		"""
-		"""
-		return self.rotorSweptArea
-	
-	def getWindSpeed(self) -> float:
-		"""
-		"""
-		return self.windSpeed
-	
-	def getCalculatedRotorHubRpm(self) -> float:
-		"""
-		"""
-		if (self.enableBraking):
-			return 0.0
-		else:
-			return self.rotorHubRpm
-	
-	def getCalculatedRotorTipSpeed(self) -> float:
-		"""
-		"""
-		if (self.enableBraking):
-			return 0.0
-		else:
-			return self.rotorTipSpeed
-	
-	def _generateSensorReading(self, windSpeed: float = ConfigConst.DEFAULT_VAL) -> float:
-		"""
-		Creates a SensorData instance with the current simulator value
-		and associated timestamp. If self.useRandomizer is enabled,
-		power output will be calculated by using a random wind speed
-		value for each query to this function ranging between
-		self.minWindSpeed and self.maxWindSpeed.
-		
-		If self.dataSet is valid, the wind speed value will be extracted
-		from the self.dataSet entries, and self.dataSetIndex will be
-		incremented to the next index, up to size - 1, after which it
-		simply will revert back to 0.
-		
-		Formula for calculating power from a wind turbine:
-		  Algorithm: P = Cp * (p/2) * A * (V^3)
-		  Reference: https://windexchange.energy.gov/small-wind-guidebook#generate
+		if not self.pauseProduction:
+			self.itemProductionCounter += 1
 
-		  P = Power output in watts
-		  Cp = Max power coefficient (0.25 - 0.45 for this module, fixed at 0.35)
-		  p = Air density in kg/m3
-		  A = Rotor swept area (m2 or (pi * D^2) / 4, where D is rotor diameter in m)
-		  V = Wind speed in m/sec
+		return float(self.itemProductionCounter)
 
-		@return The SensorData instance.
-		"""
-		sensorData = SensorData(typeID = self.typeID, typeCategoryID = self.typeCategoryID, name = self.name)
-
-		self.windSpeed = windSpeed
-
-		# actual hub rotation will be different in a real life scenario
-		# for now, just use the optimalTSR and windspeed to generate a value
-		#
-		# important: this does NOT factor in cut-in speed or cut-out speed
-		#            for Digital Twin testing, cut-in and cut-out processes
-		#            will be managed in the DTA
-
-		if (self.rotorCircumference > 0.0):
-			self.rotorTipSpeed = (60 * self.windSpeed * self.optimalTSR) / self.rotorCircumference
-
-		if (self.rotorTipSpeed > 0.0 and self.hubCircumference > 0.0):
-			self.rotorHubRpm = self.rotorTipSpeed / self.hubCircumference
-
-		if (self.airDensity > 0.0):
-			self.powerOutput = \
-				self.maxPowerCoeff * (self.airDensity / 2) * self.rotorSweptArea * (pow(self.windSpeed, 3))
-		
-		logging.debug("\nCalculated wind turbine power output:" \
-				"\n\tmaxPowerCoeff:    " + str(self.getMaxPowerCoefficient()) +
-				"\n\tairDensity:       " + str(self.getAirDensity()) +
-				"\n\trotorSweptArea:   " + str(self.getRotorSweptArea()) +
-				"\n\twindSpeed:        " + str(self.getWindSpeed()) +
-				"\n\tpowerOutputWatts: " + str(self.getPowerOutput()) +
-				"\n\trotorTipSpeed:    " + str(self.getCalculatedRotorTipSpeed()) +
-				"\n\thubRpm:           " + str(self.getCalculatedRotorHubRpm()) +
-				"\n\tenableBraking:    " + str(self.enableBraking) +
-				"\n\t")
-
-		return self.windSpeed
-	
 	def _initDefaultValues(self):
 		"""
-		Initialize default values for:
-		  Max power coefficient
-		  Rotor diameter (for this module it will be 5 meters)
-		  Rotor swept area
-
-		Value range for maximum power coefficient:
-		  Algorithm: 0.25 to 0.45, with theoreticial max of 0.59
-		  Reference: https://windexchange.energy.gov/small-wind-guidebook#generate
-		
-		Formula for calculating rotor swept area for a wind turbine:
-		  Algorithm: (pi * D^2) / 4
-		  Reference: https://windexchange.energy.gov/small-wind-guidebook#generate
-		
-		  D = rotor diameter in m
-
-		Formula for calculating optimal TSR:
-		  Algorithm: max power = (4 * pi) / n
-		  Reference: https://www.reuk.co.uk/wordpress/wind/wind-turbine-tip-speed-ratio/
-
-		  n = number of blades
-
-	    For further documentation on typical cut-out and cut-in speeds,
-        see https://www.energy.gov/eere/articles/how-do-wind-turbines-survive-severe-storms
 		"""
-		self.enableBraking = False
-		self.powerOutput   = 0.0
-		self.rotorHubRpm   = 0
-		self.rotorTipSpeed = 0
-		self.windSpeed     = 0.0
+		self.itemProductionCounter = 0
 
-		# TODO: pull these from the config file
-		self.rotorDiameter      = 8
-		self.rotorCircumference = math.pi * self.rotorDiameter
-		self.hubDiameter        = 2
-		self.hubCircumference   = math.pi * self.hubDiameter
+		self.configUtil = ConfigUtil()
 		
-		self.airDensity         = 1.225
-		self.maxPowerCoeff      = 0.35
-		self.optimalTSR         = 5
+		self.locationID = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.EDGE_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.enableCommandName = \
+			self.configUtil.getProperty( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.ENABLE_COMMAND_NAME_KEY, defaultVal = ConfigConst.NOT_SET)
+		
+		self.minItemProdRate   = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.MIN_PRODUCTION_RATE_KEY, defaultVal = 1.0)
 
-		self.minRndWindSpeed = 5.0
-		self.maxRndWindSpeed = 9.0
-
-		self.cutInSpeed  = 5.0
-		self.cutOutSpeed = 55.0
-
-		self.rotorSweptArea  = (math.pi * (pow(self.rotorDiameter, 2))) / 4
+		self.maxItemProdRate   = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.MAX_PRODUCTION_RATE_KEY, defaultVal = 60.0)
+		
+		self.defaultItemProdRate = \
+			self.configUtil.getFloat( \
+				section = ConfigConst.FACTORY_WORKCELL_SETTINGS_KEY, key = ConfigConst.DEFAULT_PRODUCTION_RATE_KEY, defaultVal = 30.0)

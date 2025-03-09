@@ -91,7 +91,7 @@ class WindTurbineAdapterManager(IDataManager):
 		self.dataMsgListener = None
 		self.curCommand = ConfigConst.DEFAULT_COMMAND
 
-		self._initWindTurbineSensorTasks()
+		self._initTasks()
 
 	def handleTelemetry(self):
 		"""
@@ -205,7 +205,7 @@ class WindTurbineAdapterManager(IDataManager):
 		else:
 			logging.warning("Received update sim data request, but sim is disabled. Ignoring.")
 
-	def _initWindTurbineSensorTasks(self):
+	def _initTasks(self):
 		"""
 		Instantiates the wind turbine sensor tasks based on the configuration file
 		settings (e.g., simulation only).
