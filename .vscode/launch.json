@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Programming Digital Twins - EDA Implementation",
+      "program": "./labbenchstudios/pdt/eda/app/EdgeDeviceApp.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

@@ -4,16 +4,12 @@
     "python.testing.unittestArgs": [
         "-v",
         "-s",
-        "./src",
+        "./tests",
         "-p",
-        "*Test.py"
+        "test_*.py"
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
-    "python.testing.pytestArgs": [
-        "src"
-    ],
-    "python.analysis.extraPaths": [
-        "./src/main/python"
-    ]
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.defaultInterpreterPath": "./wsl-venv/bin/python" // change to correct path
 }
